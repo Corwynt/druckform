@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import type { Job, JobStatus } from "./types.js";
+import type { Job } from "./types.js";
 
 function getJobsBase(): string {
   return process.env["DRUCKFORM_JOBS_DIR"] ?? "/work/jobs";

@@ -42,3 +42,8 @@ export function validateToken(token: string, expectedKind: "upload" | "download"
 export function consumeToken(token: string): void {
   tokens.delete(token);
 }
+
+/** Reset token store — for tests only */
+export function clearTokensForTest(): void {
+  tokens.clear();
+}

@@ -1,7 +1,11 @@
-import { describe, expect, it } from "vitest";
-import { generateToken, validateToken, consumeToken } from "../src/url-tokens.js";
+import { describe, expect, it, beforeEach } from "vitest";
+import { generateToken, validateToken, consumeToken, clearTokensForTest } from "../src/url-tokens.js";
 
 describe("url-tokens", () => {
+  beforeEach(() => {
+    clearTokensForTest();
+  });
+
   it("generates a valid upload token", () => {
     const tok = generateToken("job-1", "upload");
     const result = validateToken(tok, "upload");
