@@ -69,9 +69,11 @@ RUN tectonic --untrusted --keep-logs /tmp/prewarm.tex \
 COPY --from=builder /build/plantuml.jar /usr/local/lib/plantuml.jar
 
 # Layer 4: Bundled templates, styles, and schemas (change occasionally)
-COPY packages/druckform/templates/ /app/templates/
-COPY packages/druckform/styles/    /app/styles/
-COPY packages/druckform/schemas/   /app/schemas/
+# Placed at /app/packages/druckform/templates/ so the CLI's path probe
+# (../templates relative to dist/cli.js) resolves correctly.
+COPY packages/druckform/templates/ /app/packages/druckform/templates/
+COPY packages/druckform/styles/    /app/packages/druckform/styles/
+COPY packages/druckform/schemas/   /app/packages/druckform/schemas/
 
 # Layer 5: Built npm packages (change on every release)
 COPY --from=builder /build/packages/druckform/dist/     /app/packages/druckform/dist/
