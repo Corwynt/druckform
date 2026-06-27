@@ -61,8 +61,8 @@ RUN curl -fsSL \
 
 COPY docker/tectonic-prewarm.tex /tmp/prewarm.tex
 # Pre-warm: compile once so the package bundle is cached in the image.
-# --untrusted-input disables shell-escape; --keep-logs for debugging if needed.
-RUN tectonic --untrusted-input --keep-logs /tmp/prewarm.tex \
+# --untrusted disables shell-escape (tectonic 0.15.0 flag name).
+RUN tectonic --untrusted --keep-logs /tmp/prewarm.tex \
     && rm -f /tmp/prewarm.tex /tmp/prewarm.pdf
 
 # Layer 3: PlantUML jar
