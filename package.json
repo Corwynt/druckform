@@ -1,0 +1,25 @@
+{
+  "name": "druckform-monorepo",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "turbo run build && changeset publish"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.0",
+    "@changesets/cli": "^2.27.0",
+    "turbo": "^2.3.0",
+    "typescript": "^5.6.0",
+    "tsup": "^8.3.0",
+    "vitest": "^2.1.0",
+    "@vitest/coverage-v8": "^2.1.0"
+  },
+  "packageManager": "pnpm@9.14.0",
+  "engines": { "node": ">=22" }
+}
