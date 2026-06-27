@@ -1,9 +1,8 @@
 import fs from "node:fs";
-import path from "node:path";
 import yaml from "js-yaml";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { Tex, raw, escapeTeX } from "../sdk/tex.js";
+import { escapeTeX } from "../sdk/tex.js";
 import type { ComponentDef, RenderCtx } from "../sdk/types.js";
 
 interface ParamSpec {
@@ -83,7 +82,7 @@ export function loadDeclarativeComponent(yamlPath: string): ComponentDef {
       name: spec.name,
       description: spec.description,
       acceptsChildren,
-      example: spec.example,
+      ...(spec.example !== undefined ? { example: spec.example } : {}),
       requiredTokens: [...requiredTokens],
     },
     schema,

@@ -1,5 +1,5 @@
 import fs from "node:fs";
-import Ajv from "ajv";
+import { Ajv } from "ajv";
 import yaml from "js-yaml";
 import type { StyleConfig } from "../sdk/types.js";
 

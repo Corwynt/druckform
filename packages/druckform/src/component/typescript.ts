@@ -19,7 +19,11 @@ export async function loadTypeScriptComponent(tsPath: string): Promise<Component
   const code = result.outputFiles[0]?.text;
   if (!code) throw new Error(`esbuild produced no output for ${tsPath}`);
 
-  // Write to a temp file and import (data URL import not reliable for all deps)
+  // Write to a temp file and import (data URL import not reliable for all deps).
+  // The file is placed next to the original source (not in os.tmpdir()) because
+  // bundled code may contain relative imports that are resolved against the
+  // file's location — placing it beside the source ensures those paths still
+  // resolve correctly.
   const tmpFile = path.join(
     path.dirname(tsPath),
     `.druckform-tmp-${Date.now()}.mjs`,
