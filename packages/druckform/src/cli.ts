@@ -4,6 +4,7 @@ import { templatesCommand } from "./commands/templates.js";
 import { componentsCommand } from "./commands/components.js";
 import { lintCommand } from "./commands/lint.js";
 import { renderCommand } from "./commands/render.js";
+import { mcpCommand } from "./commands/mcp.js";
 
 yargs(hideBin(process.argv))
   .scriptName("druck")
@@ -57,6 +58,12 @@ yargs(hideBin(process.argv))
         argv.json,
       );
     },
+  )
+  .command(
+    "mcp",
+    "Start the MCP server (requires druckform-mcp installed)",
+    () => {},
+    () => { mcpCommand(); },
   )
   .demandCommand(1, "Specify a subcommand.")
   .strict()
