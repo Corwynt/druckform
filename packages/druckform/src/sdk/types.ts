@@ -1,4 +1,4 @@
-import type { ZodObject, ZodRawShape, infer as ZInfer } from "zod";
+import type { ZodObject, ZodRawShape } from "zod";
 
 // ── Findings & contract shapes ──────────────────────────────────────────────
 
@@ -76,7 +76,7 @@ export interface RenderCtx {
 // ── Components ──────────────────────────────────────────────────────────────
 
 export type Component<TSchema extends ZodObject<ZodRawShape>> = (
-  params: ZInfer<TSchema>,
+  params: TSchema["_output"],
   children: string,
   ctx: RenderCtx,
 ) => string;
