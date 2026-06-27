@@ -19,7 +19,7 @@ export const render: Component<typeof schema> = (params, children, ctx: RenderCt
   const color = params.variant === "warn"
     ? ctx.token("warning")
     : ctx.token("accent");
-  return Tex`\\begin{callout}{${raw(color)}}{${params.title}}
+  return Tex`\begin{callout}{${raw(color)}}{${params.title}}
 ${raw(children)}
-\\end{callout}`;
+\end{callout}`;
 };

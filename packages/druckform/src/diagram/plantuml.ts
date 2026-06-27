@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import type { StyleConfig } from "../sdk/types.js";
+import { resolveAssetPath } from "../sdk/asset-path.js";
 
 const PLANTUML_JAR = process.env["PLANTUML_JAR"] ?? "/usr/local/lib/plantuml.jar";
 
@@ -19,7 +20,9 @@ export function renderPlantUML(
   let fullContent = content;
   const skinRef = styleConfig.diagrams?.plantuml?.skinRef;
   if (skinRef) {
-    fullContent = `!include ${skinRef}\n${content}`;
+    // Validate the path doesn't escape the assets root (workDir as root)
+    const safeSkinPath = resolveAssetPath(workDir, skinRef);
+    fullContent = `!include ${safeSkinPath}\n${content}`;
   }
   fs.writeFileSync(inputFile, fullContent, "utf8");
 

@@ -61,12 +61,22 @@ export function composeDocument(
 
   function renderNode(node: ASTNode): string {
     if (node.type === "text") {
+      // Replace diagram fences with unique placeholders before mdToLatex,
+      // so that mdToLatex cannot escape backslashes/braces in the LaTeX commands.
       let text = node.content;
-      // Replace diagram fences with \includegraphics
+      const placeholders = new Map<string, string>();
+      let idx = 0;
       for (const [fence, pdfPath] of diagramMap) {
-        text = text.replaceAll(fence, `\\includegraphics[width=\\linewidth]{${pdfPath}}`);
+        const placeholder = `DRUCKFORM_DIAGRAM_${idx++}`;
+        placeholders.set(placeholder, `\\includegraphics[width=\\linewidth]{${pdfPath}}`);
+        text = text.replaceAll(fence, placeholder);
       }
-      const latex = mdToLatex(text);
+      // mdToLatex escapes user text; placeholders are all-caps alphanumeric, won't be altered
+      let latex = mdToLatex(text);
+      // Replace placeholders with actual LaTeX after escaping
+      for (const [placeholder, latexCmd] of placeholders) {
+        latex = latex.replaceAll(placeholder, latexCmd);
+      }
       trackLines(latex, "text", node.sourceLine);
       return latex;
     }

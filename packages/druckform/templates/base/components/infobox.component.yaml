@@ -6,7 +6,7 @@ params:
 slots:
   children: true
 emits: |
-  \begin{infobox}{\druckAccent}{{{title}}}
+  \begin{infobox}{{{accent}}}{{{title}}}
   {{children}}
   \end{infobox}
 example: |

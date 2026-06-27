@@ -1,4 +1,4 @@
-import type { LintContract } from "../sdk/types.js";
+import type { LintContract, ASTNode, Finding, ResolvedTemplate } from "../sdk/types.js";
 import { loadAllTemplates } from "../template/loader.js";
 import { resolveTemplate } from "../template/resolver.js";
 import { loadStyle } from "../style/validate.js";
@@ -12,6 +12,40 @@ import fs from "node:fs";
 const _t1 = path.resolve(new URL("../../templates", import.meta.url).pathname);
 const BUNDLED_TEMPLATES = fs.existsSync(_t1) ? _t1 : path.resolve(new URL("../templates", import.meta.url).pathname);
 
+// Recursive AST walker for linting — visits all levels of nesting
+function lintNodes(nodes: ASTNode[], resolved: ResolvedTemplate, findings: Finding[]): void {
+  for (const node of nodes) {
+    if (node.type !== "component") continue;
+    // Validate component name
+    if (!resolved.components[node.block.name]) {
+      findings.push({
+        severity: "error",
+        component: node.block.name,
+        message: `Unknown component '${node.block.name}'`,
+        line: node.block.sourceLine,
+      });
+    } else {
+      // Validate required params
+      const entry = resolved.components[node.block.name];
+      if (entry) {
+        try {
+          entry.def.schema.parse({ ...entry.defaults, ...node.block.params });
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : String(err);
+          findings.push({
+            severity: "error",
+            component: node.block.name,
+            message: msg,
+            line: node.block.sourceLine,
+          });
+        }
+      }
+    }
+    // Recurse into children
+    lintNodes(node.block.children, resolved, findings);
+  }
+}
+
 export async function lintCommand(
   template: string,
   inFile: string,
@@ -21,38 +55,10 @@ export async function lintCommand(
   const all = loadAllTemplates(BUNDLED_TEMPLATES, process.env["DRUCKFORM_TEMPLATES_DIR"]);
   const resolved = await resolveTemplate(template, all);
   const doc = parseDocument(inFile);
-  const findings = [];
+  const findings: Finding[] = [];
 
-  // Validate component names
-  for (const node of doc.nodes) {
-    if (node.type !== "component") continue;
-    if (!resolved.components[node.block.name]) {
-      findings.push({
-        severity: "error" as const,
-        component: node.block.name,
-        message: `Unknown component '${node.block.name}'`,
-        line: node.block.sourceLine,
-      });
-    }
-  }
-
-  // Validate required params
-  for (const node of doc.nodes) {
-    if (node.type !== "component") continue;
-    const entry = resolved.components[node.block.name];
-    if (!entry) continue;
-    try {
-      entry.def.schema.parse({ ...entry.defaults, ...node.block.params });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      findings.push({
-        severity: "error" as const,
-        component: node.block.name,
-        message: msg,
-        line: node.block.sourceLine,
-      });
-    }
-  }
+  // Validate component names and required params recursively (handles nested blocks)
+  lintNodes(doc.nodes, resolved, findings);
 
   // Token coverage (if style provided)
   if (stylePath) {
