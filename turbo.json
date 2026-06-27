@@ -3,7 +3,7 @@
   "ui": "tui",
   "tasks": {
     "typecheck": {
-      "dependsOn": [],
+      "dependsOn": ["^build"],
       "outputs": []
     },
     "build": {
