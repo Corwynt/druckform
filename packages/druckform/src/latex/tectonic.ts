@@ -15,6 +15,7 @@ export function runTectonic(texPath: string, outputPdf: string): TectonicResult 
     [
       "--keep-logs",
       "--untrusted-input", // disables shell-escape
+      "--only-cached",     // disables network access (packages must be pre-cached in Docker)
       "--outfmt",
       "pdf",
       "--outdir",
