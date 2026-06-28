@@ -99,6 +99,8 @@ export interface ComponentDef {
   render: (params: unknown, children: string, ctx: RenderCtx) => string;
   /** All token names this component requires (from params + meta.requiredTokens) */
   requiredTokens: Set<string>;
+  /** LaTeX preamble block this component needs injected once before \begin{document} */
+  preamble?: string;
 }
 
 // ── Templates ───────────────────────────────────────────────────────────────

@@ -17,6 +17,7 @@ interface DeclarativeComponentYaml {
   params: Record<string, ParamSpec>;
   slots?: { children?: boolean };
   emits: string;
+  preamble?: string;
   example?: string;
 }
 
@@ -90,5 +91,6 @@ export function loadDeclarativeComponent(yamlPath: string): ComponentDef {
     jsonSchema: jsonSchema as Record<string, unknown>,
     render,
     requiredTokens,
+    ...(spec.preamble !== undefined ? { preamble: spec.preamble } : {}),
   };
 }

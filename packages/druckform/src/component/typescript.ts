@@ -33,6 +33,7 @@ export async function loadTypeScriptComponent(tsPath: string): Promise<Component
       schema: z.ZodObject<z.ZodRawShape>;
       meta: ComponentMeta;
       render: (params: unknown, children: string, ctx: unknown) => string;
+      preamble?: string;
     };
 
     if (!mod.schema || !mod.meta || !mod.render) {
@@ -54,6 +55,7 @@ export async function loadTypeScriptComponent(tsPath: string): Promise<Component
         return mod.render(validated, children, ctx);
       },
       requiredTokens,
+      ...(mod.preamble !== undefined ? { preamble: mod.preamble } : {}),
     };
   } finally {
     await fs.unlink(tmpFile).catch(() => {});
