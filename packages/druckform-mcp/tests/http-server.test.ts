@@ -64,10 +64,19 @@ describe("HTTP server", () => {
 
   it("binds to DRUCKFORM_HTTP_BIND address when set", async () => {
     const savedEnv = process.env["DRUCKFORM_HTTP_BIND"];
-    process.env["DRUCKFORM_HTTP_BIND"] = "127.0.0.1";
-    const url = await startHttpServer(store, 7399);
-    expect(url).toBe("http://127.0.0.1:7399");
-    await store.destroy();
-    process.env["DRUCKFORM_HTTP_BIND"] = savedEnv;
+    process.env["DRUCKFORM_HTTP_BIND"] = "0.0.0.0";
+    const isolatedStore = new JobStore();
+    try {
+      const url = await startHttpServer(isolatedStore, 7399);
+      // baseUrl is always the host-side 127.0.0.1 address
+      expect(url).toBe("http://127.0.0.1:7399");
+    } finally {
+      await isolatedStore.destroy();
+      if (savedEnv === undefined) {
+        delete process.env["DRUCKFORM_HTTP_BIND"];
+      } else {
+        process.env["DRUCKFORM_HTTP_BIND"] = savedEnv;
+      }
+    }
   });
 });
