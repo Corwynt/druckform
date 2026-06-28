@@ -1,6 +1,6 @@
+import { Tex, raw } from "druckform";
+import type { Component, RenderCtx } from "druckform";
 import { z } from "zod";
-import { Tex, raw } from "../../../src/sdk/tex.js";
-import type { Component, RenderCtx } from "../../../src/sdk/types.js";
 
 export const schema = z.object({
   variant: z.enum(["info", "warn", "danger"]).default("info"),
@@ -14,6 +14,15 @@ export const meta = {
   example: '::: callout variant="warn" title="Heads up"\nBody\n:::',
   requiredTokens: ["accent", "warning"],
 };
+
+export const preamble = `\\newenvironment{callout}[2]{%
+  \\par\\vspace{0.5em}%
+  \\noindent{\\leavevmode#1\\bfseries#2}\\par
+  \\noindent\\rule{\\linewidth}{0.5pt}\\par\\smallskip
+  \\noindent\\ignorespaces
+}{%
+  \\par\\vspace{0.5em}%
+}`;
 
 export const render: Component<typeof schema> = (params, children, ctx: RenderCtx) => {
   const color = params.variant === "warn" ? ctx.token("warning") : ctx.token("accent");

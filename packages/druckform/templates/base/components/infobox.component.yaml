@@ -5,6 +5,15 @@ params:
   accent: { type: token,  required: false, default: accent }
 slots:
   children: true
+preamble: |
+  \newenvironment{infobox}[2]{%
+    \par\vspace{0.5em}%
+    \noindent{\leavevmode#1\bfseries#2}\par
+    \noindent\rule{\linewidth}{0.5pt}\par\smallskip
+    \noindent\ignorespaces
+  }{%
+    \par\vspace{0.5em}%
+  }
 emits: |
   \begin{infobox}{{{accent}}}{{{title}}}
   {{children}}

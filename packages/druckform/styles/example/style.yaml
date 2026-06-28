@@ -6,8 +6,8 @@ tokens:
     warning:   "#B26A00"
     infoboxBg: "#EEF3FB"
   fonts:
-    main: "TeX Gyre Pagella"
-    mono: "JetBrains Mono"
+    main: "Liberation Serif"
+    mono: "Liberation Mono"
   spacing:
     blockGap: "0.8em"
 diagrams:

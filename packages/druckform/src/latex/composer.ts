@@ -33,17 +33,25 @@ export function composeDocument(
 
   const stylePreamble = compileStyle(styleConfig);
 
+  // Collect preamble blocks from all template components (deduplicated).
+  // Collected upfront so PREAMBLE_LINES is known before body rendering.
+  const preambleBlocks = new Set<string>();
+  for (const entry of Object.values(template.components)) {
+    if (entry.def.preamble) preambleBlocks.add(entry.def.preamble.trim());
+  }
+  const componentPreamble = [...preambleBlocks].join("\n");
+
   // Preamble structure (joined with \n):
   //   \documentclass{article}         line 1
   //   \usepackage{fontspec}            line 2
   //   \usepackage{xcolor}              line 3
   //   \usepackage{graphicx}            line 4
-  //   [stylePreamble — N lines]        lines 5 … 4+N
-  //   \begin{document}                 line 5+N
-  //   [body]                           starts at line 6+N
-  //
-  // So body offset = stylePreamble.split("\n").length + 5
-  const PREAMBLE_LINES = stylePreamble.split("\n").length + 5;
+  //   [stylePreamble — S lines]        lines 5 … 4+S
+  //   [componentPreamble — C lines]    lines 5+S … 4+S+C  (omitted when empty)
+  //   \begin{document}                 line 5+S+C
+  //   [body]                           starts at line 6+S+C
+  const componentPreambleLines = componentPreamble ? componentPreamble.split("\n").length : 0;
+  const PREAMBLE_LINES = stylePreamble.split("\n").length + 5 + componentPreambleLines;
 
   let lineCounter = 0;
 
@@ -116,16 +124,16 @@ export function composeDocument(
 
   const body = renderNodes(doc.nodes);
 
-  const tex = [
+  const texParts = [
     "\\documentclass{article}",
     "\\usepackage{fontspec}",
     "\\usepackage{xcolor}",
     "\\usepackage{graphicx}",
     stylePreamble,
-    "\\begin{document}",
-    body,
-    "\\end{document}",
-  ].join("\n");
+  ];
+  if (componentPreamble) texParts.push(componentPreamble);
+  texParts.push("\\begin{document}", body, "\\end{document}");
+  const tex = texParts.join("\n");
 
   return { tex, sourceMap };
 }
