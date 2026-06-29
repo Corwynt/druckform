@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -53,6 +54,29 @@ describe("JobStore", () => {
     store.createInline("base", "d2");
     store.createInline("base", "d3");
     expect(() => store.createInline("base", "d4")).toThrow("Maximum concurrent");
+    store.destroy();
+  });
+
+  it("keepAlive pushes expiry forward but not past the max lifetime", () => {
+    const store = new JobStore();
+    const job = store.create("base", "s.yaml", "up", "dl");
+    store.update(job.id, { expiresAt: Date.now() + 1000 });
+    store.keepAlive(job.id);
+    const after = store.get(job.id);
+    // pushed well past the +1000ms we set
+    expect((after?.expiresAt ?? 0)).toBeGreaterThan(Date.now() + 60 * 1000);
+    // never beyond createdAt + MAX_LIFETIME (24h)
+    expect((after?.expiresAt ?? 0)).toBeLessThanOrEqual((after?.createdAt ?? 0) + 24 * 60 * 60 * 1000);
+    store.destroy();
+  });
+
+  it("delete removes the job and its dir", () => {
+    const store = new JobStore();
+    const job = store.create("base", "s.yaml", "up", "dl");
+    expect(fs.existsSync(job.dir)).toBe(true);
+    store.delete(job.id);
+    expect(store.get(job.id)).toBeUndefined();
+    expect(fs.existsSync(job.dir)).toBe(false);
     store.destroy();
   });
 

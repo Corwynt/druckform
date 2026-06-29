@@ -12,6 +12,7 @@ function getMaxJobs(): number {
 }
 
 const JOB_TTL_MS = 60 * 60 * 1000; // 1 hour
+const MAX_LIFETIME_MS = 24 * 60 * 60 * 1000; // hard cap; keep-alive can't extend beyond this
 
 export class JobStore {
   private jobs = new Map<string, Job>();
@@ -86,6 +87,21 @@ export class JobStore {
     const job = this.jobs.get(id);
     if (!job) throw new Error(`Job not found: ${id}`);
     Object.assign(job, patch);
+  }
+
+  /** Extend a job's TTL on activity (upload/finalize/refresh), capped at the max lifetime. */
+  keepAlive(id: string): void {
+    const job = this.jobs.get(id);
+    if (!job) return;
+    job.expiresAt = Math.min(Date.now() + JOB_TTL_MS, job.createdAt + MAX_LIFETIME_MS);
+  }
+
+  /** Explicitly remove a job and its working directory. */
+  delete(id: string): void {
+    const job = this.jobs.get(id);
+    if (!job) return;
+    fs.rmSync(job.dir, { recursive: true, force: true });
+    this.jobs.delete(id);
   }
 
   private reap(): void {
