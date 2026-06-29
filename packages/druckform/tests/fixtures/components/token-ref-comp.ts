@@ -1,6 +1,6 @@
-import { z } from "zod";
 import { tokenRef } from "druckform";
 import type { RenderCtx } from "druckform";
+import { z } from "zod";
 
 export const schema = z.object({ accent: tokenRef("accent"), title: z.string() });
 export const meta = { name: "tref", description: "token-ref test", acceptsChildren: false };

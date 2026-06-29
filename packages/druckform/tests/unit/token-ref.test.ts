@@ -1,8 +1,8 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { tokenRef } from "../../src/sdk/token-ref.js";
 import { loadComponent } from "../../src/component/loader.js";
+import { tokenRef } from "../../src/sdk/token-ref.js";
 
 const FIX = path.resolve(import.meta.dirname, "../fixtures/components/token-ref-comp.ts");
 

@@ -84,12 +84,12 @@ describe("resolveTemplate", () => {
     fs.mkdirSync(path.join(dir, "base"), { recursive: true });
     fs.writeFileSync(
       path.join(dir, "base", "template.yaml"),
-      "name: base\ncomponents: {}\nstyle:\n  tokens:\n    colors:\n      accent: \"#111111\"\n      warning: \"#222222\"\n",
+      'name: base\ncomponents: {}\nstyle:\n  tokens:\n    colors:\n      accent: "#111111"\n      warning: "#222222"\n',
     );
     fs.mkdirSync(path.join(dir, "child"), { recursive: true });
     fs.writeFileSync(
       path.join(dir, "child", "template.yaml"),
-      "name: child\nextends: base\ncomponents: {}\nstyle:\n  tokens:\n    colors:\n      accent: \"#999999\"\n",
+      'name: child\nextends: base\ncomponents: {}\nstyle:\n  tokens:\n    colors:\n      accent: "#999999"\n',
     );
     const resolved = await resolveTemplate("child", loadAllTemplates(dir));
     expect(resolved.style?.tokens.colors?.accent).toBe("#999999"); // child overrides

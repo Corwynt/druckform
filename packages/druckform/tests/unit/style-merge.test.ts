@@ -13,7 +13,11 @@ describe("mergeStyle", () => {
     };
     expect(mergeStyle(base, over)).toEqual({
       $schema: "style-v1",
-      tokens: { colors: { accent: "#999999", warning: "#222222" }, fonts: {}, spacing: { gap: "1em" } },
+      tokens: {
+        colors: { accent: "#999999", warning: "#222222" },
+        fonts: {},
+        spacing: { gap: "1em" },
+      },
     });
   });
 

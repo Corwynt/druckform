@@ -1,12 +1,16 @@
 import path from "node:path";
-import { describe, expect, it, beforeAll } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { mdToLatex } from "../../src/latex/md-to-latex.js";
+import type { EmitOpts } from "../../src/latex/tokens-to-latex.js";
 import { loadAllTemplates } from "../../src/template/loader.js";
 import { resolveTemplate } from "../../src/template/resolver.js";
-import type { EmitOpts } from "../../src/latex/tokens-to-latex.js";
 
 const BUNDLED = path.resolve(import.meta.dirname, "../../templates");
-const ctx = { token: (n: string) => `\\${n}`, style: { colors: {}, fonts: {}, spacing: {} }, frontmatter: {} };
+const ctx = {
+  token: (n: string) => `\\${n}`,
+  style: { colors: {}, fonts: {}, spacing: {} },
+  frontmatter: {},
+};
 let opts: EmitOpts;
 
 beforeAll(async () => {
@@ -44,7 +48,9 @@ describe("mdToLatex (GFM)", () => {
 
   it("renders a GFM table with alignment", () => {
     const out = mdToLatex("| A | B |\n|:--|--:|\n| 1 | 2 |", opts);
-    expect(out).toContain("\\begin{tabularx}{\\linewidth}{>{\\raggedright\\arraybackslash}X>{\\raggedleft\\arraybackslash}X}");
+    expect(out).toContain(
+      "\\begin{tabularx}{\\linewidth}{>{\\raggedright\\arraybackslash}X>{\\raggedleft\\arraybackslash}X}",
+    );
     expect(out).toContain("\\textbf{A} & \\textbf{B} \\\\");
     expect(out).toContain("1 & 2 \\\\");
   });

@@ -22,16 +22,18 @@ function writeUserTemplate(yaml: string): string {
 
 describe("reserved block: namespace", () => {
   it("rejects a user template that defines a non-builtin block: component", () => {
-    userDir = writeUserTemplate(
+    const dir = writeUserTemplate(
       'name: mytpl\nextends: base\ncomponents:\n  "block:fancy":\n    source: x.ts\n',
     );
-    expect(() => loadAllTemplates(BUNDLED, userDir!)).toThrow(/reserved 'block:' namespace/);
+    userDir = dir;
+    expect(() => loadAllTemplates(BUNDLED, dir)).toThrow(/reserved 'block:' namespace/);
   });
 
   it("allows a user template to override a known built-in block component", () => {
-    userDir = writeUserTemplate(
+    const dir = writeUserTemplate(
       'name: mytpl\nextends: base\ncomponents:\n  "block:table":\n    source: x.ts\n',
     );
-    expect(() => loadAllTemplates(BUNDLED, userDir!)).not.toThrow();
+    userDir = dir;
+    expect(() => loadAllTemplates(BUNDLED, dir)).not.toThrow();
   });
 });

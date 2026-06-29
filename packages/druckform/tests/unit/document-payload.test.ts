@@ -4,7 +4,11 @@ import { loadComponent } from "../../src/component/loader.js";
 import type { DocumentLayout } from "../../src/sdk/types.js";
 
 const FIX = path.resolve(import.meta.dirname, "../fixtures/components/echo-document.ts");
-const ctx = { token: (n: string) => `\\${n}`, style: { colors: {}, fonts: {}, spacing: {} }, frontmatter: {} };
+const ctx = {
+  token: (n: string) => `\\${n}`,
+  style: { colors: {}, fonts: {}, spacing: {} },
+  frontmatter: {},
+};
 
 const layout: DocumentLayout = {
   kind: "document",

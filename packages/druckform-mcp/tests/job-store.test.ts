@@ -64,9 +64,11 @@ describe("JobStore", () => {
     store.keepAlive(job.id);
     const after = store.get(job.id);
     // pushed well past the +1000ms we set
-    expect((after?.expiresAt ?? 0)).toBeGreaterThan(Date.now() + 60 * 1000);
+    expect(after?.expiresAt ?? 0).toBeGreaterThan(Date.now() + 60 * 1000);
     // never beyond createdAt + MAX_LIFETIME (24h)
-    expect((after?.expiresAt ?? 0)).toBeLessThanOrEqual((after?.createdAt ?? 0) + 24 * 60 * 60 * 1000);
+    expect(after?.expiresAt ?? 0).toBeLessThanOrEqual(
+      (after?.createdAt ?? 0) + 24 * 60 * 60 * 1000,
+    );
     store.destroy();
   });
 

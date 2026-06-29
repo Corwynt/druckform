@@ -19,8 +19,14 @@ export function makeRenderMarkdownTool(store: JobStore, baseUrl: string) {
     inputSchema: {
       type: "object",
       properties: {
-        document: { type: "string", description: "Markdown document text (may include frontmatter)" },
-        template: { type: "string", description: "Template name (optional; overrides frontmatter)" },
+        document: {
+          type: "string",
+          description: "Markdown document text (may include frontmatter)",
+        },
+        template: {
+          type: "string",
+          description: "Template name (optional; overrides frontmatter)",
+        },
         style: { type: "string", description: "Style YAML text (optional override)" },
       },
       required: ["document"],
@@ -66,7 +72,9 @@ export function makeRenderMarkdownTool(store: JobStore, baseUrl: string) {
         ...(errSummary !== undefined && { errorSummary: errSummary }),
       });
       return {
-        content: [{ type: "text" as const, text: JSON.stringify({ status: "error", error: result.error }) }],
+        content: [
+          { type: "text" as const, text: JSON.stringify({ status: "error", error: result.error }) },
+        ],
       };
     },
   };

@@ -32,8 +32,11 @@ describe("component tombstone (null removes an inherited component)", () => {
   });
 
   it("rejects nulling a built-in block: component at load time", () => {
-    userDir = writeUserTemplate('name: mytpl\nextends: base\ncomponents:\n  "block:table": null\n');
-    expect(() => loadAllTemplates(BUNDLED, userDir!)).toThrow(/cannot remove built-in block component/);
+    const dir = writeUserTemplate(
+      'name: mytpl\nextends: base\ncomponents:\n  "block:table": null\n',
+    );
+    userDir = dir;
+    expect(() => loadAllTemplates(BUNDLED, dir)).toThrow(/cannot remove built-in block component/);
   });
 
   it("still inherits unmentioned components as-is", async () => {

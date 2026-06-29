@@ -65,6 +65,8 @@ export function renderDocument(
   try {
     return JSON.parse(stdout) as RenderContract;
   } catch {
-    throw new Error(`druck render produced no parseable contract: ${stderr || stdout || "(empty)"}`);
+    throw new Error(
+      `druck render produced no parseable contract: ${stderr || stdout || "(empty)"}`,
+    );
   }
 }

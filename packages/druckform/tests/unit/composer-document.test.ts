@@ -2,9 +2,9 @@ import path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { composeDocument } from "../../src/latex/composer.js";
 import { parseMarkdownString } from "../../src/parse/parser.js";
+import type { ResolvedTemplate, StyleConfig } from "../../src/sdk/types.js";
 import { loadAllTemplates } from "../../src/template/loader.js";
 import { resolveTemplate } from "../../src/template/resolver.js";
-import type { ResolvedTemplate, StyleConfig } from "../../src/sdk/types.js";
 
 const BUNDLED = path.resolve(import.meta.dirname, "../../templates");
 const style: StyleConfig = { $schema: "style-v1", tokens: { colors: { accent: "#111111" } } };
@@ -16,7 +16,13 @@ beforeAll(async () => {
 
 describe("composer document shell", () => {
   it("assembles documentclass + engine core + shell in order", () => {
-    const { tex } = composeDocument(parseMarkdownString("# Title\n\nBody."), template, style, new Map(), "/a");
+    const { tex } = composeDocument(
+      parseMarkdownString("# Title\n\nBody."),
+      template,
+      style,
+      new Map(),
+      "/a",
+    );
     expect(tex.startsWith("\\documentclass{article}")).toBe(true);
     for (const pkg of [
       "\\usepackage{fontspec}",
@@ -35,12 +41,20 @@ describe("composer document shell", () => {
 
   it("rejects ::: document used as a body block", () => {
     const doc = parseMarkdownString("::: document\nx\n:::\n");
-    expect(() => composeDocument(doc, template, style, new Map(), "/a")).toThrow(/renderer-internal/);
+    expect(() => composeDocument(doc, template, style, new Map(), "/a")).toThrow(
+      /renderer-internal/,
+    );
   });
 
   it("keeps the source map aligned: the body's heading maps to its .md line", () => {
     // Line 1 of the doc is the heading.
-    const { tex, sourceMap } = composeDocument(parseMarkdownString("# Heading"), template, style, new Map(), "/a");
+    const { tex, sourceMap } = composeDocument(
+      parseMarkdownString("# Heading"),
+      template,
+      style,
+      new Map(),
+      "/a",
+    );
     const texLines = tex.split("\n");
     const headingTexLine = texLines.findIndex((l) => l.includes("\\section{Heading}")) + 1; // 1-based
     expect(headingTexLine).toBeGreaterThan(0);

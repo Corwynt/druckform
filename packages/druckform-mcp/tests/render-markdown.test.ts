@@ -52,14 +52,16 @@ describe("render_markdown", () => {
     const out = await call({
       document: "# Hi",
       template: "base",
-      style: "$schema: style-v1\ntokens: { colors: { accent: \"#111111\" } }",
+      style: '$schema: style-v1\ntokens: { colors: { accent: "#111111" } }',
     });
     const job = store.get(out.job_id as string);
     expect(fs.existsSync(path.join(job?.dir as string, "style.yaml"))).toBe(true);
   });
 
   it("returns an error result when the render fails", async () => {
-    (renderDocument as unknown as { mockReturnValueOnce: (v: unknown) => void }).mockReturnValueOnce({
+    (
+      renderDocument as unknown as { mockReturnValueOnce: (v: unknown) => void }
+    ).mockReturnValueOnce({
       schemaVersion: "1",
       status: "error",
       pdf: null,

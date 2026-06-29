@@ -101,7 +101,10 @@ function emitError(message: string, json: boolean): void {
       schemaVersion: "1",
       status: "error",
       pdf: null,
-      error: { summary: message, findings: [{ severity: "error", component: "template", message }] },
+      error: {
+        summary: message,
+        findings: [{ severity: "error", component: "template", message }],
+      },
     },
     json,
   );

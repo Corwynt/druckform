@@ -3,7 +3,11 @@ import { describe, expect, it } from "vitest";
 import { loadComponent } from "../../src/component/loader.js";
 
 const FIX = path.resolve(import.meta.dirname, "../fixtures/components/echo-hr.ts");
-const ctx = { token: (n: string) => `\\${n}`, style: { colors: {}, fonts: {}, spacing: {} }, frontmatter: {} };
+const ctx = {
+  token: (n: string) => `\\${n}`,
+  style: { colors: {}, fonts: {}, spacing: {} },
+  frontmatter: {},
+};
 
 describe("component render receives BlockElement payload", () => {
   it("passes the element through to a TS component", async () => {

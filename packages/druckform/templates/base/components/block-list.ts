@@ -1,5 +1,5 @@
-import { z } from "zod";
 import type { BlockElement, RenderCtx } from "druckform";
+import { z } from "zod";
 
 export const schema = z.object({});
 export const meta = { name: "block:list", description: "Markdown list", acceptsChildren: false };

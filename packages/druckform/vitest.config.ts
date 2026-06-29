@@ -12,6 +12,12 @@ export default defineConfig({
         "dist/**",
         "vitest.config.ts",
         "tsup.config.ts",
+        // Test fixtures and support code.
+        "tests/**",
+        // Bundled template components are loaded via an esbuild temp-file, so v8
+        // can't attribute coverage to their source — their behavior is covered by
+        // the block-component / tokens-to-latex / document-component tests instead.
+        "templates/**",
       ],
     },
   },

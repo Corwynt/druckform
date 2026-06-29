@@ -1,11 +1,11 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { composeDocument } from "../../src/latex/composer.js";
 import { loadComponent } from "../../src/component/loader.js";
+import { composeDocument } from "../../src/latex/composer.js";
 import { parseMarkdownString } from "../../src/parse/parser.js";
+import type { RenderCtx, StyleConfig } from "../../src/sdk/types.js";
 import { loadAllTemplates } from "../../src/template/loader.js";
 import { resolveTemplate } from "../../src/template/resolver.js";
-import type { RenderCtx, StyleConfig } from "../../src/sdk/types.js";
 
 const BUNDLED = path.resolve(import.meta.dirname, "../../templates");
 const USER = path.resolve(import.meta.dirname, "../fixtures/templates");

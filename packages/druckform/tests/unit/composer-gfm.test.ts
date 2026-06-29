@@ -2,9 +2,9 @@ import path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { composeDocument } from "../../src/latex/composer.js";
 import { parseMarkdownString } from "../../src/parse/parser.js";
+import type { ResolvedTemplate, StyleConfig } from "../../src/sdk/types.js";
 import { loadAllTemplates } from "../../src/template/loader.js";
 import { resolveTemplate } from "../../src/template/resolver.js";
-import type { ResolvedTemplate, StyleConfig } from "../../src/sdk/types.js";
 
 const BUNDLED = path.resolve(import.meta.dirname, "../../templates");
 const style: StyleConfig = { $schema: "style-v1", tokens: { colors: { accent: "#111111" } } };

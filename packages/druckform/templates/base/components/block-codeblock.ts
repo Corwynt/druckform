@@ -1,8 +1,12 @@
-import { z } from "zod";
 import type { BlockElement, RenderCtx } from "druckform";
+import { z } from "zod";
 
 export const schema = z.object({});
-export const meta = { name: "block:codeblock", description: "Fenced code block", acceptsChildren: false };
+export const meta = {
+  name: "block:codeblock",
+  description: "Fenced code block",
+  acceptsChildren: false,
+};
 export const preamble = [
   "\\usepackage{listings}",
   "\\lstset{basicstyle=\\ttfamily\\small,breaklines=true,columns=fullflexible,frame=single}",

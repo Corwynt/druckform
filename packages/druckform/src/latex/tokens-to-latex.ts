@@ -1,4 +1,4 @@
-import MarkdownIt from "markdown-it";
+import type MarkdownIt from "markdown-it";
 import { resolveAssetPath } from "../sdk/asset-path.js";
 import { escapeTeX } from "../sdk/tex.js";
 import type { BlockElement, RenderCtx, ResolvedTemplate } from "../sdk/types.js";
@@ -30,8 +30,7 @@ function block(opts: EmitOpts, name: string, children: string, element: BlockEle
   const entry = opts.template.components[name];
   if (!entry) {
     throw new Error(
-      `Template '${opts.template.name}' is missing built-in component '${name}'. ` +
-        `Templates must extend 'base'.`,
+      `Template '${opts.template.name}' is missing built-in component '${name}'. Templates must extend 'base'.`,
     );
   }
   return entry.def.render({}, children, opts.ctx, element);

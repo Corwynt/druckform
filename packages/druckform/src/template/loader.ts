@@ -37,8 +37,7 @@ export function loadAllTemplates(bundledDir: string, userDir?: string): Map<stri
       for (const [compName, spec] of Object.entries(config.components ?? {})) {
         if (compName.startsWith("block:") && spec === null) {
           throw new Error(
-            `Template '${config.name}' cannot remove built-in block component '${compName}' ` +
-              `(set to null). 'block:' components are required by the Markdown renderer.`,
+            `Template '${config.name}' cannot remove built-in block component '${compName}' (set to null). 'block:' components are required by the Markdown renderer.`,
           );
         }
       }

@@ -4,14 +4,20 @@ import { loadComponent } from "../../src/component/loader.js";
 import type { BlockElement } from "../../src/sdk/types.js";
 
 const DIR = path.resolve(import.meta.dirname, "../../templates/base/components");
-const ctx = { token: (n: string) => `\\${n}`, style: { colors: {}, fonts: {}, spacing: {} }, frontmatter: {} };
+const ctx = {
+  token: (n: string) => `\\${n}`,
+  style: { colors: {}, fonts: {}, spacing: {} },
+  frontmatter: {},
+};
 const load = (f: string) => loadComponent(path.join(DIR, f), "");
 const el = (e: BlockElement) => e;
 
 describe("simple block components", () => {
   it("heading maps levels 1..6 to section..subparagraph", async () => {
     const def = await load("block-heading.ts");
-    expect(def.render({}, "Title", ctx, el({ kind: "heading", level: 1 }))).toBe("\\section{Title}");
+    expect(def.render({}, "Title", ctx, el({ kind: "heading", level: 1 }))).toBe(
+      "\\section{Title}",
+    );
     expect(def.render({}, "T", ctx, el({ kind: "heading", level: 3 }))).toBe("\\subsubsection{T}");
     expect(def.render({}, "T", ctx, el({ kind: "heading", level: 6 }))).toBe("\\subparagraph{T}");
   });
@@ -25,7 +31,9 @@ describe("simple block components", () => {
 
   it("hr emits a rule", async () => {
     const def = await load("block-hr.ts");
-    expect(def.render({}, "", ctx, el({ kind: "hr" }))).toBe("\\noindent\\rule{\\linewidth}{0.4pt}");
+    expect(def.render({}, "", ctx, el({ kind: "hr" }))).toBe(
+      "\\noindent\\rule{\\linewidth}{0.4pt}",
+    );
   });
 
   it("image emits includegraphics with the resolved src", async () => {

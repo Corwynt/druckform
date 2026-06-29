@@ -62,7 +62,14 @@ describe("template selection from frontmatter", () => {
   it("errors when neither --template nor frontmatter provides a template", async () => {
     const { writes, restore } = capture();
     await expect(
-      renderCommand(undefined, undefined, path.join(FIXTURES, "documents/valid.md"), FIXTURES, OUT, true),
+      renderCommand(
+        undefined,
+        undefined,
+        path.join(FIXTURES, "documents/valid.md"),
+        FIXTURES,
+        OUT,
+        true,
+      ),
     ).rejects.toThrow("exit");
     expect(JSON.parse(writes.join("")).status).toBe("error");
     restore();
@@ -71,7 +78,14 @@ describe("template selection from frontmatter", () => {
   it("errors when the named template does not exist", async () => {
     const { writes, restore } = capture();
     await expect(
-      renderCommand(undefined, undefined, path.join(FIXTURES, "documents/frontmatter-bad-template.md"), FIXTURES, OUT, true),
+      renderCommand(
+        undefined,
+        undefined,
+        path.join(FIXTURES, "documents/frontmatter-bad-template.md"),
+        FIXTURES,
+        OUT,
+        true,
+      ),
     ).rejects.toThrow("exit");
     expect(JSON.parse(writes.join("")).status).toBe("error");
     restore();

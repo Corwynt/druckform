@@ -1,9 +1,13 @@
-import { z } from "zod";
 import type { BlockElement, RenderCtx } from "druckform";
+import { z } from "zod";
 
 export const schema = z.object({});
 export const meta = { name: "block:table", description: "Markdown table", acceptsChildren: false };
-export const preamble = ["\\usepackage{tabularx}", "\\usepackage{booktabs}", "\\usepackage{array}"].join("\n");
+export const preamble = [
+  "\\usepackage{tabularx}",
+  "\\usepackage{booktabs}",
+  "\\usepackage{array}",
+].join("\n");
 
 function colType(align: "left" | "center" | "right" | null): string {
   if (align === "center") return ">{\\centering\\arraybackslash}X";

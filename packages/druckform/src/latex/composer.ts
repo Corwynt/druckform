@@ -1,3 +1,4 @@
+import { applyFrontmatterDefaults } from "../parse/frontmatter.js";
 import type {
   ASTNode,
   DocumentLayout,
@@ -7,7 +8,6 @@ import type {
   SourceMap,
   StyleConfig,
 } from "../sdk/types.js";
-import { applyFrontmatterDefaults } from "../parse/frontmatter.js";
 import { compileStyle, tokenMacro } from "../style/compiler.js";
 import { mdToLatex } from "./md-to-latex.js";
 
@@ -69,8 +69,7 @@ export function composeDocument(
   const docEntry = template.components.document;
   if (!docEntry) {
     throw new Error(
-      `Template '${template.name}' is missing the built-in 'document' shell component. ` +
-        `Templates must extend 'base'.`,
+      `Template '${template.name}' is missing the built-in 'document' shell component. Templates must extend 'base'.`,
     );
   }
   const documentclass = "article"; // Phase 3: overridable via params/frontmatter

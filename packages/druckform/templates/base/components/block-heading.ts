@@ -1,10 +1,21 @@
-import { z } from "zod";
 import type { BlockElement, RenderCtx } from "druckform";
+import { z } from "zod";
 
 export const schema = z.object({});
-export const meta = { name: "block:heading", description: "Markdown heading", acceptsChildren: true };
+export const meta = {
+  name: "block:heading",
+  description: "Markdown heading",
+  acceptsChildren: true,
+};
 
-const CMDS = ["section", "subsection", "subsubsection", "paragraph", "subparagraph", "subparagraph"];
+const CMDS = [
+  "section",
+  "subsection",
+  "subsubsection",
+  "paragraph",
+  "subparagraph",
+  "subparagraph",
+];
 
 export function render(
   _params: unknown,
