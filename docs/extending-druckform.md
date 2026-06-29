@@ -58,7 +58,7 @@ druck render \
 | `druck templates` | — | `--json` | template list |
 | `druck components` | `--template/-t` | `--json` | resolved components for a template |
 | `druck lint` | `--template/-t`, `--in` | `--style`, `--json` | `LintContract` |
-| `druck render` | `--template/-t`, `--style`, `--in`, `--out` | `--assets` (default `.`), `--json` | `RenderContract` + PDF on disk |
+| `druck render` | `--template/-t`, `--in`, `--out` | `--style` (overrides template style), `--assets` (default `.`), `--json` | `RenderContract` + PDF on disk |
 | `druck mcp` | — | — | starts the MCP server (spawns `druckform-mcp`) |
 
 `--json` makes every command emit a stable machine-readable contract (see [§9](#9-contracts--types)). `render`/`lint` exit non-zero on findings.
@@ -294,7 +294,34 @@ fonts.mono present  → "fontMono"   ⚠ NOT "mono"
 
 ⚠️ **Fonts are special:** to satisfy a `requiredTokens: ["fontMain"]`, your style must set `tokens.fonts.main`. There is no token literally named `main`.
 
-A template can also point at a recommended style via `style_defaults: path/to/style.yaml` in `template.yaml` (informational; the actual style is still passed explicitly to `render`).
+### 4.5 Where style comes from (template style + optional override)
+
+A template **carries its own style**. Declare it inline in `template.yaml`:
+
+```yaml
+# template.yaml
+name: report
+extends: base
+style:
+  tokens:
+    colors:
+      accent: "#B26A00"
+```
+
+Resolution, lowest → highest precedence:
+
+```
+base.style  →  …each template in the extends chain…  →  leaf.style  →  external --style (if any)
+```
+
+- Styles **merge down the `extends` chain** (per-token; child wins) — exactly like component defaults.
+- The external `--style` file is now **optional**; when given, it merges on top of the template's style. Omit it and you get the template's own style.
+- Token coverage (§4.4) runs against the **fully merged** effective style.
+
+```bash
+druck render -t report --in doc.md --out out.pdf            # template's style
+druck render -t report --in doc.md --style brand.yaml --out out.pdf   # brand.yaml overrides
+```
 
 ---
 
@@ -479,7 +506,8 @@ The `source` path is **relative to the template's directory**.
 name: <string>                 # required — the template id used everywhere
 description: <string>          # optional
 extends: <templateName>        # optional — inherit another template's components
-style_defaults: <path>         # optional — recommended style file (informational)
+style:                         # optional — inline default style, merged down the chain (see §4.5)
+  tokens: { colors: { accent: "#2E5AAC" } }
 components:
   <componentName>:
     source: <path>             # full definition (new or full override)
@@ -582,6 +610,51 @@ export function render(_p: unknown, _c: string, _ctx: RenderCtx, element?: Block
 
 Now any document rendered with `--template fancy` uses your table renderer; everything else falls through to `base`.
 
+### 6.5 Overriding the document shell (page layout)
+
+The whole LaTeX wrapper — document class, geometry, headers/footers, title block — is itself an overrideable component named **`document`** (reserved; shipped by `base`; not invocable from the document body). Override it like any component to control page layout.
+
+A `document` override receives a typed `DocumentLayout` payload (the 4th render arg) and must mark where the body goes:
+
+```ts
+// components/document.ts  (registered as `document` in your template.yaml)
+import { z } from "zod";
+import type { BlockElement, DocumentLayout, RenderCtx } from "druckform";
+
+export const schema = z.object({});
+export const meta = { name: "document", description: "A4 + headers", acceptsChildren: true };
+
+export function render(_p: unknown, _c: string, _ctx: RenderCtx, el?: BlockElement | DocumentLayout): string {
+  if (!el || el.kind !== "document") return "DRUCKFORM_BODY";
+  return [
+    el.stylePreamble,          // compiled style (raw)
+    el.componentPreamble,      // deduped component preambles (raw)
+    "\\usepackage[a4paper,margin=2.5cm]{geometry}",
+    "\\usepackage{fancyhdr}\\pagestyle{fancy}",
+    "\\begin{document}",
+    "DRUCKFORM_BODY",          // ← required: where the rendered body is spliced
+    "\\end{document}",
+  ].join("\n");
+}
+```
+
+Declarative form — same slots, raw:
+
+```yaml
+name: document
+params: {}
+slots: { children: false }
+emits: |
+  {{stylePreamble}}
+  {{componentPreamble}}
+  \usepackage[a4paper,margin=2.5cm]{geometry}
+  \begin{document}
+  {{body}}
+  \end{document}
+```
+
+**Engine-core split (important):** the composer always emits `\documentclass{…}` and the non-overridable engine packages — `fontspec`, `xcolor`, `graphicx`, `hyperref`, `ulem` — **before** your shell. These are output-correctness requirements (fonts, colors, images, links, strikethrough), so a custom `document` can't break them by omission. Your shell owns everything after: it **chooses** the documentclass value (via the payload / a param) but does **not** emit the literal `\documentclass` line, and it places the style/component preambles, page setup, title block, and the `DRUCKFORM_BODY` marker. A shell that omits the body marker is rejected at compose time.
+
 ---
 
 ## 7. Built-in block elements (GFM)
@@ -647,7 +720,9 @@ export DRUCKFORM_TEMPLATES_DIR=~/druck-templates
 name: acme
 description: "ACME house style."
 extends: base
-style_defaults: style.yaml
+style:                      # inline house style, merged over base (see §4.5)
+  tokens:
+    colors: { accent: "#0A7" }
 components:
   "block:table":            # override GFM tables with a branded look
     source: components/block-table.ts
@@ -671,14 +746,15 @@ emits: |
   \begin{tcolorbox}[colback=,colframe=,title={{title}}]\end{tcolorbox}
 ```
 
-Document + style, then render:
+Lint and render — no `--style` needed (the template carries its own; pass `--style` only to override):
 
 ```bash
-druck lint   -t acme --in doc.md --style ~/druck-templates/acme/style.yaml
-druck render -t acme --in doc.md --style ~/druck-templates/acme/style.yaml --out acme.pdf
+druck lint   -t acme --in doc.md
+druck render -t acme --in doc.md --out acme.pdf
+druck render -t acme --in doc.md --style client-brand.yaml --out acme.pdf   # optional override
 ```
 
-(Remember: a `token`-typed param like `bg: accent` makes `accent` a *required* token — the style must define `colors.accent`.)
+(Remember: a `token`-typed param like `bg: accent` makes `accent` a *required* token — the effective style must define `colors.accent`.)
 
 ---
 
