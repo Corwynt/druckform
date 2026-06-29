@@ -75,11 +75,33 @@ export interface RenderCtx {
 
 // ── Components ──────────────────────────────────────────────────────────────
 
+// Typed payload for built-in block-level element components. Supplied by the
+// Markdown emitter; user components leave the 4th render arg undefined.
+export type BlockElement =
+  | {
+      kind: "table";
+      alignments: Array<"left" | "center" | "right" | null>;
+      header: string[]; // each cell is pre-rendered inline LaTeX
+      rows: string[][]; // each cell is pre-rendered inline LaTeX
+    }
+  | { kind: "codeblock"; language: string | null; code: string }
+  | {
+      kind: "list";
+      ordered: boolean;
+      start: number | null;
+      items: Array<{ content: string; task: "checked" | "unchecked" | null }>;
+    }
+  | { kind: "heading"; level: number } // content via `children`
+  | { kind: "blockquote" } // content via `children`
+  | { kind: "image"; src: string; alt: string; title: string | null } // src = resolved path
+  | { kind: "hr" };
+
 export type Component<TSchema extends ZodObject<ZodRawShape>> = (
   // rollup-plugin-dts re-exports z.infer<T> as `infer<T>` (keyword collision) — use _output directly
   params: TSchema["_output"],
   children: string,
   ctx: RenderCtx,
+  element?: BlockElement,
 ) => string;
 
 export interface ComponentMeta {
@@ -96,7 +118,7 @@ export interface ComponentDef {
   schema: ZodObject<ZodRawShape>;
   /** JSON Schema derived from zod schema, for contract output */
   jsonSchema: Record<string, unknown>;
-  render: (params: unknown, children: string, ctx: RenderCtx) => string;
+  render: (params: unknown, children: string, ctx: RenderCtx, element?: BlockElement) => string;
   /** All token names this component requires (from params + meta.requiredTokens) */
   requiredTokens: Set<string>;
   /** LaTeX preamble block this component needs injected once before \begin{document} */

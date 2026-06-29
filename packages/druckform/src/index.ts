@@ -4,6 +4,7 @@ export type {
   Finding,
   RenderCtx,
   Component,
+  BlockElement,
   ComponentDef,
   ComponentMeta,
   ResolvedTemplate,

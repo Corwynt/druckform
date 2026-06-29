@@ -54,7 +54,12 @@ export function loadDeclarativeComponent(yamlPath: string): ComponentDef {
 
   // Compile the emits template into a render function
   // Slots: {{paramName}} for escaped text, {{children}} for raw LaTeX
-  const render = (params: unknown, children: string, ctx: RenderCtx): string => {
+  const render = (
+    params: unknown,
+    children: string,
+    ctx: RenderCtx,
+    _element?: import("../sdk/types.js").BlockElement,
+  ): string => {
     const validated = schema.parse(params);
     let output = spec.emits;
 

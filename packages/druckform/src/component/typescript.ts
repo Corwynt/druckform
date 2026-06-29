@@ -32,7 +32,7 @@ export async function loadTypeScriptComponent(tsPath: string): Promise<Component
     const mod = (await import(tmpFile)) as {
       schema: z.ZodObject<z.ZodRawShape>;
       meta: ComponentMeta;
-      render: (params: unknown, children: string, ctx: unknown) => string;
+      render: (params: unknown, children: string, ctx: unknown, element?: unknown) => string;
       preamble?: string;
     };
 
@@ -50,9 +50,9 @@ export async function loadTypeScriptComponent(tsPath: string): Promise<Component
       meta: mod.meta,
       schema: mod.schema,
       jsonSchema: jsonSchema as Record<string, unknown>,
-      render: (params, children, ctx) => {
+      render: (params, children, ctx, element) => {
         const validated = mod.schema.parse(params);
-        return mod.render(validated, children, ctx);
+        return mod.render(validated, children, ctx, element);
       },
       requiredTokens,
       ...(mod.preamble !== undefined ? { preamble: mod.preamble } : {}),
