@@ -1,0 +1,6 @@
+name: customdoc
+description: "Test template overriding the document shell"
+extends: base
+components:
+  document:
+    source: components/document.ts
