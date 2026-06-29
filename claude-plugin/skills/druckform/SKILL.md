@@ -15,8 +15,11 @@ Convert Markdown with composable components into styled PDFs via LaTeX. Two bina
 | `list_templates` | — | `{ schemaVersion: "1", templates: [{ name, extends, origin, description }] }` |
 | `list_components` | `template: string` | `{ schemaVersion: "1", template, components: [{ name, description, params, acceptsChildren, example }] }` |
 | `render_document` | `template: string, style: string` | `{ job_id, upload_url, download_url, expires_at, manifest_spec }` |
+| `render_markdown` | `document: string, template?, style?` | `{ job_id, download_url, expires_at }` or `{ status: "error", error }` |
 | `validate_document` | `job_id: string` | `{ schemaVersion: "1", ok: bool, findings: [{ severity, component, message, line? }] }` |
 | `finalize_job` | `job_id: string` | `{ status: "ok", download_url }` or `{ status: "error", error: { summary, findings } }` |
+
+**Asset-less documents:** prefer `render_markdown({ document })` — it renders inline Markdown text to PDF with no ZIP and no upload, returning a `download_url` directly. `template`/`style` are optional (template may come from frontmatter, style from the template). Use the `render_document` → upload → `finalize_job` flow below only when you have assets (images, `.puml` skins).
 
 ## Workflow
 

@@ -6,6 +6,7 @@ import { makeFinalizeJobTool } from "./tools/finalize-job.js";
 import { listComponentsTool } from "./tools/list-components.js";
 import { listTemplatesTool } from "./tools/list-templates.js";
 import { makeRenderDocumentTool } from "./tools/render-document.js";
+import { makeRenderMarkdownTool } from "./tools/render-markdown.js";
 import { makeValidateDocumentTool } from "./tools/validate-document.js";
 
 export async function startMcpServer(store: JobStore, baseUrl: string): Promise<void> {
@@ -40,6 +41,15 @@ export async function startMcpServer(store: JobStore, baseUrl: string): Promise<
     renderTool.description,
     { template: z.string(), style: z.string() },
     async (args) => renderTool.handler(args),
+  );
+
+  // render_markdown: { document: string, template?: string, style?: string }
+  const renderMdTool = makeRenderMarkdownTool(store, baseUrl);
+  server.tool(
+    renderMdTool.name,
+    renderMdTool.description,
+    { document: z.string(), template: z.string().optional(), style: z.string().optional() },
+    async (args) => renderMdTool.handler(args),
   );
 
   // finalize_job: { job_id: string }

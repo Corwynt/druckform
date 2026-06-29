@@ -24,21 +24,7 @@ export class JobStore {
   }
 
   create(template: string, style: string, uploadToken: string, downloadToken: string): Job {
-    this.reap();
-
-    const active = [...this.jobs.values()].filter(
-      (j) => j.status !== "done" && j.status !== "error",
-    );
-    const maxJobs = getMaxJobs();
-    if (active.length >= maxJobs) {
-      throw new Error(`Maximum concurrent jobs (${maxJobs}) reached. Try again later.`);
-    }
-
-    const id = crypto.randomUUID();
-    const dir = path.join(getJobsBase(), id);
-    fs.mkdirSync(dir, { recursive: true });
-
-    const now = Date.now();
+    const { id, dir, now } = this.allocate();
     const job: Job = {
       id,
       status: "pending",
@@ -52,9 +38,44 @@ export class JobStore {
       expiresAt: now + JOB_TTL_MS,
       createdAt: now,
     };
-
     this.jobs.set(id, job);
     return job;
+  }
+
+  /** Create a job for the inline (no-upload) render path: a job dir + a download token. */
+  createInline(template: string | undefined, downloadToken: string): Job {
+    const { id, dir, now } = this.allocate();
+    const job: Job = {
+      id,
+      status: "pending",
+      template: template ?? "",
+      style: "",
+      dir,
+      uploadToken: "",
+      downloadToken,
+      uploadUsed: true, // no upload step for the inline path
+      downloadUsed: false,
+      expiresAt: now + JOB_TTL_MS,
+      createdAt: now,
+    };
+    this.jobs.set(id, job);
+    return job;
+  }
+
+  // Reap, enforce the concurrency cap, and allocate a fresh job dir.
+  private allocate(): { id: string; dir: string; now: number } {
+    this.reap();
+    const active = [...this.jobs.values()].filter(
+      (j) => j.status !== "done" && j.status !== "error",
+    );
+    const maxJobs = getMaxJobs();
+    if (active.length >= maxJobs) {
+      throw new Error(`Maximum concurrent jobs (${maxJobs}) reached. Try again later.`);
+    }
+    const id = crypto.randomUUID();
+    const dir = path.join(getJobsBase(), id);
+    fs.mkdirSync(dir, { recursive: true });
+    return { id, dir, now: Date.now() };
   }
 
   get(id: string): Job | undefined {

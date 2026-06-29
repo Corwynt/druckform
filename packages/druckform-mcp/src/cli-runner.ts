@@ -50,25 +50,21 @@ export function lintDocument(template: string, inFile: string, stylePath: string
 }
 
 export function renderDocument(
-  template: string,
-  stylePath: string,
+  template: string | undefined,
+  stylePath: string | undefined,
   inFile: string,
   assetsDir: string,
   outPdf: string,
 ): RenderContract {
-  return JSON.parse(
-    runOrThrow([
-      "render",
-      "--template",
-      template,
-      "--style",
-      stylePath,
-      "--in",
-      inFile,
-      "--assets",
-      assetsDir,
-      "--out",
-      outPdf,
-    ]),
-  ) as RenderContract;
+  const args = ["render", "--in", inFile, "--assets", assetsDir, "--out", outPdf];
+  if (template) args.push("--template", template);
+  if (stylePath) args.push("--style", stylePath);
+  // `druck render` exits 1 on render errors but always writes a JSON RenderContract
+  // to stdout — so parse stdout regardless of exit code rather than throwing.
+  const { stdout, stderr } = run(args);
+  try {
+    return JSON.parse(stdout) as RenderContract;
+  } catch {
+    throw new Error(`druck render produced no parseable contract: ${stderr || stdout || "(empty)"}`);
+  }
 }

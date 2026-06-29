@@ -40,6 +40,22 @@ describe("JobStore", () => {
     store.destroy();
   });
 
+  it("createInline makes a download-only job that counts toward the cap", () => {
+    const store = new JobStore();
+    const job = store.createInline("base", "dltok");
+    expect(job.id).toBeTruthy();
+    expect(job.status).toBe("pending");
+    expect(job.dir).toContain(job.id);
+    expect(job.downloadToken).toBe("dltok");
+    expect(job.uploadToken).toBe("");
+    expect(job.uploadUsed).toBe(true);
+    // counts toward the active-jobs cap (max 3)
+    store.createInline("base", "d2");
+    store.createInline("base", "d3");
+    expect(() => store.createInline("base", "d4")).toThrow("Maximum concurrent");
+    store.destroy();
+  });
+
   it("reaps expired jobs", () => {
     const store = new JobStore();
     const job = store.create("base", "s.yaml", "up", "dl");
