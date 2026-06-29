@@ -132,7 +132,7 @@ Rebuild (`pnpm turbo build`) and restart the MCP server after code changes.
 
 **Troubleshooting `Failed to reconnect … -32000`:** the server crashed on startup. The two common causes:
 
-- **Port already in use.** The server binds an HTTP port (default `7331`) on launch; if the Docker-based plugin server or a stale instance already holds it, startup fails with `EADDRINUSE`. Free the port (stop the other server) or override it: `DRUCKFORM_HTTP_PORT=7332` (and `DRUCKFORM_HTTP_BIND` to change the bind host). With `claude mcp add`, pass it via `-e DRUCKFORM_HTTP_PORT=7332`.
+- **Port already in use.** By default (`DRUCKFORM_HTTP_PORT=0`) the server binds an OS-assigned ephemeral port on launch, so concurrent instances don't clash and `EADDRINUSE` should not occur. If you pin a fixed port via `DRUCKFORM_HTTP_PORT` and another instance already holds it, startup fails with `EADDRINUSE` — free the port or choose another (and use `DRUCKFORM_HTTP_BIND` to change the bind host). With `claude mcp add`, pass it via `-e DRUCKFORM_HTTP_PORT=7332`.
 - **Wrong entry point.** Make sure you registered `packages/druckform-mcp/dist/index.js`, not `cli.js mcp` — the latter needs `druckform-mcp` on your `PATH`.
 
 To see the actual error, run the entry point by hand: `node packages/druckform-mcp/dist/index.js` — it logs the listening URL or the crash.
