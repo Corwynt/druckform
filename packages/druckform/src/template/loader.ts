@@ -9,6 +9,16 @@ export interface TemplateEntry {
   origin: "bundled" | "user";
 }
 
+const KNOWN_BLOCK_COMPONENTS = new Set([
+  "block:heading",
+  "block:blockquote",
+  "block:hr",
+  "block:image",
+  "block:codeblock",
+  "block:table",
+  "block:list",
+]);
+
 export function loadAllTemplates(bundledDir: string, userDir?: string): Map<string, TemplateEntry> {
   const templates = new Map<string, TemplateEntry>();
 
@@ -24,6 +34,16 @@ export function loadAllTemplates(bundledDir: string, userDir?: string): Map<stri
 
       const raw = fs.readFileSync(configPath, "utf8");
       const config = yaml.load(raw) as TemplateConfig;
+      if (origin === "user") {
+        for (const compName of Object.keys(config.components ?? {})) {
+          if (compName.startsWith("block:") && !KNOWN_BLOCK_COMPONENTS.has(compName)) {
+            throw new Error(
+              `Template '${config.name}' uses the reserved 'block:' namespace for unknown ` +
+                `component '${compName}'. Only built-in block components may use this prefix.`,
+            );
+          }
+        }
+      }
       templates.set(config.name, { config, dir: templateDir, origin });
     }
   }
