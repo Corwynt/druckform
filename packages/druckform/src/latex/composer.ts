@@ -19,6 +19,7 @@ export function composeDocument(
   template: ResolvedTemplate,
   styleConfig: StyleConfig,
   diagramMap: Map<string, string>, // fence text → pdf path
+  assetsRoot: string,
 ): ComposeResult {
   const sourceMap: SourceMap = new Map();
 
@@ -46,12 +47,14 @@ export function composeDocument(
   //   \usepackage{fontspec}            line 2
   //   \usepackage{xcolor}              line 3
   //   \usepackage{graphicx}            line 4
-  //   [stylePreamble — S lines]        lines 5 … 4+S
-  //   [componentPreamble — C lines]    lines 5+S … 4+S+C  (omitted when empty)
-  //   \begin{document}                 line 5+S+C
-  //   [body]                           starts at line 6+S+C
+  //   \usepackage{hyperref}            line 5
+  //   \usepackage[normalem]{ulem}      line 6
+  //   [stylePreamble — S lines]        lines 7 … 6+S
+  //   [componentPreamble — C lines]    lines 7+S … 6+S+C  (omitted when empty)
+  //   \begin{document}                 line 7+S+C
+  //   [body]                           starts at line 8+S+C
   const componentPreambleLines = componentPreamble ? componentPreamble.split("\n").length : 0;
-  const PREAMBLE_LINES = stylePreamble.split("\n").length + 5 + componentPreambleLines;
+  const PREAMBLE_LINES = stylePreamble.split("\n").length + 7 + componentPreambleLines;
 
   let lineCounter = 0;
 
@@ -80,7 +83,7 @@ export function composeDocument(
         text = text.replaceAll(fence, placeholder);
       }
       // mdToLatex escapes user text; placeholders are all-caps alphanumeric, won't be altered
-      let latex = mdToLatex(text);
+      let latex = mdToLatex(text, { template, ctx, assetsRoot });
       // Replace placeholders with actual LaTeX after escaping
       for (const [placeholder, latexCmd] of placeholders) {
         latex = latex.replaceAll(placeholder, latexCmd);
@@ -129,6 +132,8 @@ export function composeDocument(
     "\\usepackage{fontspec}",
     "\\usepackage{xcolor}",
     "\\usepackage{graphicx}",
+    "\\usepackage{hyperref}",
+    "\\usepackage[normalem]{ulem}",
     stylePreamble,
   ];
   if (componentPreamble) texParts.push(componentPreamble);

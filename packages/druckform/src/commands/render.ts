@@ -23,7 +23,7 @@ export async function renderCommand(
   template: string,
   stylePath: string,
   inFile: string,
-  _assetsDir: string,
+  assetsDir: string,
   outPdf: string,
   json: boolean,
 ): Promise<void> {
@@ -50,7 +50,7 @@ export async function renderCommand(
 
   try {
     const diagramMap = await prerenderDiagrams(doc, styleConfig, workDir, path.dirname(stylePath));
-    const { tex, sourceMap } = composeDocument(doc, resolved, styleConfig, diagramMap);
+    const { tex, sourceMap } = composeDocument(doc, resolved, styleConfig, diagramMap, assetsDir);
 
     const texPath = path.join(workDir, "document.tex");
     fs.writeFileSync(texPath, tex, "utf8");
