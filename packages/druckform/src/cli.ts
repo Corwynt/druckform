@@ -11,7 +11,7 @@ yargs(hideBin(process.argv))
   .usage("$0 <command> [options]")
   .command(
     "templates",
-    "List available templates (Sätze)",
+    "List available templates",
     (y) => y.option("json", { type: "boolean", default: false }),
     (argv) => {
       templatesCommand(argv.json);
@@ -19,7 +19,7 @@ yargs(hideBin(process.argv))
   )
   .command(
     "components",
-    "List resolved components for a template (Lettern)",
+    "List resolved components for a template",
     (y) =>
       y
         .option("template", { alias: "t", type: "string", demandOption: true })

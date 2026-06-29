@@ -5,7 +5,7 @@ const schema = z.object({ template: z.string() });
 
 export const listComponentsTool = {
   name: "list_components",
-  description: "List the resolved components (Lettern) for a template.",
+  description: "List the resolved components for a template.",
   inputSchema: {
     type: "object",
     properties: { template: { type: "string", description: "Template name" } },

@@ -2,7 +2,7 @@ import { listTemplates } from "../cli-runner.js";
 
 export const listTemplatesTool = {
   name: "list_templates",
-  description: "List all available document templates (Sätze).",
+  description: "List all available document templates.",
   inputSchema: { type: "object", properties: {}, required: [] },
   handler: async () => {
     const result = listTemplates();
