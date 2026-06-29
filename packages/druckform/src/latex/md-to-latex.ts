@@ -1,89 +1,13 @@
-import { escapeTeX } from "../sdk/tex.js";
+import MarkdownIt from "markdown-it";
+import { type EmitOpts, tokensToLatex } from "./tokens-to-latex.js";
+
+const md = new MarkdownIt({ html: false, linkify: true });
 
 /**
- * Minimal Markdown → LaTeX converter for text nodes.
- * Handles: paragraphs, bold, italic, inline code, headings (h1-h4), unordered lists.
- * Diagram fences are replaced by their \includegraphics refs before this runs.
+ * Convert a Markdown text node to LaTeX. Inline marks are emitted directly;
+ * block-level elements are dispatched to the active template's `block:*`
+ * components so they can be overridden through the template extension chain.
  */
-export function mdToLatex(md: string): string {
-  const lines = md.split("\n");
-  const out: string[] = [];
-  let inList = false;
-
-  for (const line of lines) {
-    // Headings
-    const headingMatch = /^(#{1,4})\s+(.+)$/.exec(line);
-    if (headingMatch) {
-      if (inList) {
-        out.push("\\end{itemize}");
-        inList = false;
-      }
-      const level = headingMatch[1]?.length ?? 1;
-      const cmds = ["section", "subsection", "subsubsection", "paragraph"];
-      const cmd = cmds[level - 1] ?? "paragraph";
-      out.push(`\\${cmd}{${inlineMarkdown(headingMatch[2] ?? "")}}`);
-      continue;
-    }
-
-    // Unordered list items
-    const listMatch = /^[-*]\s+(.+)$/.exec(line);
-    if (listMatch) {
-      if (!inList) {
-        out.push("\\begin{itemize}");
-        inList = true;
-      }
-      out.push(`  \\item ${inlineMarkdown(listMatch[1] ?? "")}`);
-      continue;
-    }
-
-    if (inList && line.trim() === "") {
-      out.push("\\end{itemize}");
-      inList = false;
-    }
-
-    // Blank line = paragraph break
-    if (line.trim() === "") {
-      out.push("");
-      continue;
-    }
-
-    out.push(inlineMarkdown(line));
-  }
-
-  if (inList) out.push("\\end{itemize}");
-  return out.join("\n");
-}
-
-/**
- * Convert inline markdown (bold, italic, code) to LaTeX, escaping plain text.
- * Processes markdown patterns first, then escapes remaining plain-text segments.
- */
-function inlineMarkdown(text: string): string {
-  const parts: string[] = [];
-  const pattern = /\*\*(.+?)\*\*|\*(.+?)\*|`(.+?)`/g;
-  let lastIndex = 0;
-
-  for (let match = pattern.exec(text); match !== null; match = pattern.exec(text)) {
-    if (match.index > lastIndex) {
-      parts.push(escapeTeX(text.slice(lastIndex, match.index)));
-    }
-
-    const full = match[0] ?? "";
-    if (full.startsWith("**")) {
-      parts.push(`\\textbf{${escapeTeX(match[1] ?? "")}}`);
-    } else if (full.startsWith("*")) {
-      parts.push(`\\textit{${escapeTeX(match[2] ?? "")}}`);
-    } else {
-      parts.push(`\\texttt{${escapeTeX(match[3] ?? "")}}`);
-    }
-
-    lastIndex = pattern.lastIndex;
-  }
-
-  // Escape any remaining plain text after the last match
-  if (lastIndex < text.length) {
-    parts.push(escapeTeX(text.slice(lastIndex)));
-  }
-
-  return parts.join("");
+export function mdToLatex(src: string, opts: EmitOpts): string {
+  return tokensToLatex(md.parse(src, {}), opts);
 }

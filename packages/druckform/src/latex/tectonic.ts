@@ -15,7 +15,6 @@ export function runTectonic(texPath: string, outputPdf: string): TectonicResult 
     [
       "--keep-logs",
       "--untrusted", // disables shell-escape (tectonic 0.15.0 flag name)
-      "--only-cached", // disables network access (packages must be pre-cached in Docker)
       "--outfmt",
       "pdf",
       "--outdir",
@@ -30,8 +29,23 @@ export function runTectonic(texPath: string, outputPdf: string): TectonicResult 
   // Write full log to disk for human debugging
   fs.writeFileSync(logPath, log, "utf8");
 
+  const ok = result.status === 0;
+
+  // Tectonic names its output after the input stem (e.g. document.tex -> document.pdf)
+  // and ignores the requested --out filename. Rename to the requested path so callers
+  // (and the MCP finalize/download step) find the PDF where they expect it.
+  if (ok) {
+    const produced = path.join(
+      path.dirname(outputPdf),
+      `${path.basename(texPath, path.extname(texPath))}.pdf`,
+    );
+    if (produced !== outputPdf) {
+      fs.renameSync(produced, outputPdf);
+    }
+  }
+
   return {
-    ok: result.status === 0,
+    ok,
     log,
   };
 }

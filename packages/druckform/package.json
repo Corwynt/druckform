@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "description": "Markdown → PDF via LaTeX — engine CLI",
   "license": "MIT",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -19,7 +21,9 @@
     "druck": "./dist/cli.js",
     "druckform": "./dist/cli.js"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
@@ -30,17 +34,19 @@
     "ajv": "^8.17.0",
     "esbuild": "^0.24.0",
     "js-yaml": "^4.1.0",
+    "markdown-it": "^14.1.0",
     "yargs": "^17.7.0",
     "zod": "^3.23.0",
     "zod-to-json-schema": "^3.23.0"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
+    "@types/markdown-it": "^14.1.2",
     "@types/node": "^22.0.0",
     "@types/yargs": "^17.0.0",
-    "typescript": "^5.6.0",
+    "@vitest/coverage-v8": "^2.1.0",
     "tsup": "^8.3.0",
-    "vitest": "^2.1.0",
-    "@vitest/coverage-v8": "^2.1.0"
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
   }
 }

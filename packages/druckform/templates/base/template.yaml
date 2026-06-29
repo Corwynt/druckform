@@ -3,3 +3,17 @@ description: "Base template — foundational components for all documents."
 components:
   infobox:
     source: components/infobox.component.yaml
+  "block:heading":
+    source: components/block-heading.ts
+  "block:blockquote":
+    source: components/block-blockquote.ts
+  "block:hr":
+    source: components/block-hr.ts
+  "block:image":
+    source: components/block-image.ts
+  "block:codeblock":
+    source: components/block-codeblock.ts
+  "block:table":
+    source: components/block-table.ts
+  "block:list":
+    source: components/block-list.ts

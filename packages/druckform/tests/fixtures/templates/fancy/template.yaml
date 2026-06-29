@@ -1,0 +1,6 @@
+name: fancy
+description: "Test template overriding block:table"
+extends: base
+components:
+  "block:table":
+    source: components/block-table.ts
