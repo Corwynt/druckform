@@ -79,6 +79,23 @@ describe("resolveTemplate", () => {
     expect(resolved.components.infobox?.defaults.accent).toBe("warningColor");
   });
 
+  it("merges template style down the extends chain (child wins per key)", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "druckform-style-"));
+    fs.mkdirSync(path.join(dir, "base"), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, "base", "template.yaml"),
+      "name: base\ncomponents: {}\nstyle:\n  tokens:\n    colors:\n      accent: \"#111111\"\n      warning: \"#222222\"\n",
+    );
+    fs.mkdirSync(path.join(dir, "child"), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, "child", "template.yaml"),
+      "name: child\nextends: base\ncomponents: {}\nstyle:\n  tokens:\n    colors:\n      accent: \"#999999\"\n",
+    );
+    const resolved = await resolveTemplate("child", loadAllTemplates(dir));
+    expect(resolved.style?.tokens.colors?.accent).toBe("#999999"); // child overrides
+    expect(resolved.style?.tokens.colors?.warning).toBe("#222222"); // inherited from base
+  });
+
   it("throws on circular inheritance", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "druckform-circ-"));
     fs.mkdirSync(path.join(dir, "a"), { recursive: true });
