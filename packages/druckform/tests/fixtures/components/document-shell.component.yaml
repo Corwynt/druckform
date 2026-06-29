@@ -1,0 +1,12 @@
+name: document
+description: declarative document shell
+params: {}
+slots:
+  children: false
+emits: |
+  {{stylePreamble}}
+  {{componentPreamble}}
+  \documentclass-was-{{documentclass}}
+  \begin{document}
+  {{body}}
+  \end{document}

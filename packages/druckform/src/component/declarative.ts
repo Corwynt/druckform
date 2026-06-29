@@ -58,7 +58,7 @@ export function loadDeclarativeComponent(yamlPath: string): ComponentDef {
     params: unknown,
     children: string,
     ctx: RenderCtx,
-    _element?: import("../sdk/types.js").BlockElement | import("../sdk/types.js").DocumentLayout,
+    element?: import("../sdk/types.js").BlockElement | import("../sdk/types.js").DocumentLayout,
   ): string => {
     const validated = schema.parse(params);
     let output = spec.emits;
@@ -79,6 +79,15 @@ export function loadDeclarativeComponent(yamlPath: string): ComponentDef {
     // Replace children slot
     if (acceptsChildren) {
       output = output.replaceAll("{{children}}", children);
+    }
+
+    // Document shell slots (raw LaTeX) — only when rendering the `document` shell.
+    if (element && element.kind === "document") {
+      output = output
+        .replaceAll("{{stylePreamble}}", element.stylePreamble)
+        .replaceAll("{{componentPreamble}}", element.componentPreamble)
+        .replaceAll("{{documentclass}}", element.documentclass)
+        .replaceAll("{{body}}", "DRUCKFORM_BODY");
     }
 
     return output;
