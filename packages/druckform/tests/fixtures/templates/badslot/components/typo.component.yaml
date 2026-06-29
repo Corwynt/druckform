@@ -1,0 +1,9 @@
+name: card
+description: card with a typo slot
+params:
+  title: { type: string, required: true }
+slots:
+  children: true
+emits: |
+  \section{{{titel}}}
+  {{children}}

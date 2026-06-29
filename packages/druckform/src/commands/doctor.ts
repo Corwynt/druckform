@@ -1,8 +1,44 @@
 import fs from "node:fs";
 import path from "node:path";
+import yaml from "js-yaml";
 import type { Finding, LintContract, ResolvedTemplate } from "../sdk/types.js";
 import { loadAllTemplates } from "../template/loader.js";
 import { resolveTemplate } from "../template/resolver.js";
+
+interface DeclYaml {
+  name: string;
+  params?: Record<string, { type?: string }>;
+  slots?: { children?: boolean };
+  emits?: string;
+}
+
+const DOCUMENT_SLOTS = new Set(["stylePreamble", "componentPreamble", "documentclass", "body"]);
+
+function checkDeclarativeSlots(resolved: ResolvedTemplate, findings: Finding[]): void {
+  for (const [name, entry] of Object.entries(resolved.components)) {
+    const ext = entry.sourcePath.toLowerCase();
+    if (!ext.endsWith(".yaml") && !ext.endsWith(".yml")) continue;
+    const spec = yaml.load(fs.readFileSync(entry.sourcePath, "utf8")) as DeclYaml;
+    const emits = spec.emits ?? "";
+    const params = new Set(Object.keys(spec.params ?? {}));
+    const acceptsChildren = spec.slots?.children === true;
+    for (const m of emits.matchAll(/\{\{([^{}]+)\}\}/g)) {
+      const slot = (m[1] ?? "").trim();
+      const ok =
+        params.has(slot) ||
+        (slot === "children" && acceptsChildren) ||
+        slot.startsWith("fm.") ||
+        (name === "document" && DOCUMENT_SLOTS.has(slot));
+      if (!ok) {
+        findings.push({
+          severity: "error",
+          component: name,
+          message: `emits references unknown slot '{{${slot}}}' (no matching param/children/fm.*/document slot)`,
+        });
+      }
+    }
+  }
+}
 
 const _t1 = path.resolve(new URL("../../templates", import.meta.url).pathname);
 const BUNDLED_TEMPLATES = fs.existsSync(_t1)
@@ -56,7 +92,7 @@ export async function doctorCommand(template: string, json: boolean): Promise<vo
 
   if (resolved) {
     checkMeta(resolved, findings);
-    // further checks added in later tasks
+    checkDeclarativeSlots(resolved, findings);
   }
 
   const contract: LintContract = { schemaVersion: "1", ok: findings.length === 0, findings };
