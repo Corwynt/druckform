@@ -76,10 +76,13 @@ The MCP server exposes **5 tools**. Rendering is a job: create → upload a ZIP 
 | `list_templates` | — | `{ schemaVersion, templates: [{ name, extends, origin, description? }] }` |
 | `list_components` | `template: string` | `{ schemaVersion, template, components: [{ name, description, params, acceptsChildren, example? }] }` |
 | `render_document` | `template: string, style: string` | `{ job_id, upload_url, download_url, expires_at, manifest_spec }` |
+| `render_markdown` | `document: string, template?, style?` | `{ job_id, download_url, expires_at }` **or** `{ status: "error", error }` |
 | `validate_document` | `job_id: string` | `{ schemaVersion, ok, findings }` |
 | `finalize_job` | `job_id: string` | `{ status: "ok", download_url }` **or** `{ status: "error", error: { summary, findings } }` |
 
-`style` is the **path of the style file inside the ZIP** (e.g. `"style.yaml"`, or `"styles/corporate.yaml"` if nested).
+`style` (for `render_document`) is the **path of the style file inside the ZIP** (e.g. `"style.yaml"`, or `"styles/corporate.yaml"` if nested).
+
+**No-ZIP shortcut:** for an asset-less document, skip the ZIP/upload dance entirely — call `render_markdown({ document })` with the Markdown text inline (`template`/`style` optional; the template may come from the document's frontmatter, the style from the template). It returns a `download_url` directly. Use the `render_document` + upload + `finalize_job` flow only when the bundle has assets (images, `.puml` skins).
 
 ### 2.1 End-to-end
 
