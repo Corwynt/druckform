@@ -21,15 +21,31 @@ const BUNDLED_TEMPLATES = fs.existsSync(_t1)
   : path.resolve(new URL("../templates", import.meta.url).pathname);
 
 export async function renderCommand(
-  template: string,
+  templateArg: string | undefined,
   stylePath: string | undefined,
   inFile: string,
   assetsDir: string,
   outPdf: string,
   json: boolean,
 ): Promise<void> {
+  const doc = parseDocument(inFile);
   const all = loadAllTemplates(BUNDLED_TEMPLATES, process.env.DRUCKFORM_TEMPLATES_DIR);
-  const resolved = await resolveTemplate(template, all);
+
+  // Template: explicit --template wins; otherwise the document's frontmatter.
+  const templateName = templateArg ?? doc.frontmatter.template;
+  if (!templateName) {
+    emitError(
+      "No template specified — pass --template or set 'template' in the document frontmatter.",
+      json,
+    );
+    process.exit(1);
+  }
+  if (!all.has(templateName)) {
+    emitError(`Template not found: '${templateName}'`, json);
+    process.exit(1);
+  }
+
+  const resolved = await resolveTemplate(templateName, all);
   // Effective style = template's declared style, with the external --style merged on top.
   const externalStyle = stylePath ? loadStyle(stylePath) : undefined;
   const styleConfig = mergeStyle(resolved.style, externalStyle);
@@ -48,7 +64,6 @@ export async function renderCommand(
     process.exit(1);
   }
 
-  const doc = parseDocument(inFile);
   const workDir = fs.mkdtempSync(path.join(os.tmpdir(), "druckform-"));
 
   try {
@@ -78,6 +93,18 @@ export async function renderCommand(
   } finally {
     fs.rmSync(workDir, { recursive: true, force: true });
   }
+}
+
+function emitError(message: string, json: boolean): void {
+  emitResult(
+    {
+      schemaVersion: "1",
+      status: "error",
+      pdf: null,
+      error: { summary: message, findings: [{ severity: "error", component: "template", message }] },
+    },
+    json,
+  );
 }
 
 function emitResult(contract: RenderContract, json: boolean): void {

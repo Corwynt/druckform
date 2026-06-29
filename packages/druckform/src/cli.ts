@@ -33,7 +33,7 @@ yargs(hideBin(process.argv))
     "Validate a document against its template",
     (y) =>
       y
-        .option("template", { alias: "t", type: "string", demandOption: true })
+        .option("template", { alias: "t", type: "string" })
         .option("in", { type: "string", demandOption: true })
         .option("style", { type: "string" })
         .option("json", { type: "boolean", default: false }),
@@ -46,7 +46,7 @@ yargs(hideBin(process.argv))
     "Render a document to PDF (produce a Druckform)",
     (y) =>
       y
-        .option("template", { alias: "t", type: "string", demandOption: true })
+        .option("template", { alias: "t", type: "string" })
         .option("style", { type: "string" })
         .option("in", { type: "string", demandOption: true })
         .option("assets", { type: "string", default: "." })

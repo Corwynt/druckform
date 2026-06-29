@@ -51,14 +51,31 @@ function lintNodes(nodes: ASTNode[], resolved: ResolvedTemplate, findings: Findi
 }
 
 export async function lintCommand(
-  template: string,
+  templateArg: string | undefined,
   inFile: string,
   stylePath: string | undefined,
   json: boolean,
 ): Promise<void> {
-  const all = loadAllTemplates(BUNDLED_TEMPLATES, process.env.DRUCKFORM_TEMPLATES_DIR);
-  const resolved = await resolveTemplate(template, all);
   const doc = parseDocument(inFile);
+  const all = loadAllTemplates(BUNDLED_TEMPLATES, process.env.DRUCKFORM_TEMPLATES_DIR);
+
+  // Template: explicit --template wins; otherwise the document's frontmatter.
+  const templateName = templateArg ?? doc.frontmatter.template;
+  if (!templateName || !all.has(templateName)) {
+    const message = templateName
+      ? `Template not found: '${templateName}'`
+      : "No template specified — pass --template or set 'template' in the document frontmatter.";
+    const contract: LintContract = {
+      schemaVersion: "1",
+      ok: false,
+      findings: [{ severity: "error", component: "template", message }],
+    };
+    if (json) process.stdout.write(`${JSON.stringify(contract, null, 2)}\n`);
+    else console.error(`[error] template: ${message}`);
+    process.exit(1);
+  }
+
+  const resolved = await resolveTemplate(templateName, all);
   const findings: Finding[] = [];
 
   // Validate component names and required params recursively (handles nested blocks)
