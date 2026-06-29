@@ -1,0 +1,5 @@
+name: tokendrift
+extends: base
+components:
+  drift:
+    source: components/drift.ts

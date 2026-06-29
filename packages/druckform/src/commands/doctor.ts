@@ -40,6 +40,34 @@ function checkDeclarativeSlots(resolved: ResolvedTemplate, findings: Finding[]):
   }
 }
 
+function checkTsSource(resolved: ResolvedTemplate, findings: Finding[]): void {
+  for (const [name, entry] of Object.entries(resolved.components)) {
+    if (!/\.(ts|js|mjs)$/i.test(entry.sourcePath)) continue;
+    const src = fs.readFileSync(entry.sourcePath, "utf8");
+    const used = new Set<string>();
+    for (const m of src.matchAll(/(?:ctx\.token|tokenRef)\(\s*["']([^"']+)["']\s*\)/g)) {
+      if (m[1]) used.add(m[1]);
+    }
+    for (const token of used) {
+      if (!entry.def.requiredTokens.has(token)) {
+        findings.push({
+          severity: "warning",
+          component: name,
+          message: `uses token '${token}' but does not declare it (add tokenRef("${token}") or meta.requiredTokens)`,
+        });
+      }
+    }
+    // Heuristic: interpolating a param without escaping (only a hint; low confidence).
+    if (/\$\{\s*params\.\w+\s*\}/.test(src) && !/escapeTeX|Tex`/.test(src)) {
+      findings.push({
+        severity: "warning",
+        component: name,
+        message: "interpolates params.* without escapeTeX/Tex — verify user input is escaped",
+      });
+    }
+  }
+}
+
 const _t1 = path.resolve(new URL("../../templates", import.meta.url).pathname);
 const BUNDLED_TEMPLATES = fs.existsSync(_t1)
   ? _t1
@@ -93,6 +121,7 @@ export async function doctorCommand(template: string, json: boolean): Promise<vo
   if (resolved) {
     checkMeta(resolved, findings);
     checkDeclarativeSlots(resolved, findings);
+    checkTsSource(resolved, findings);
   }
 
   const contract: LintContract = { schemaVersion: "1", ok: findings.length === 0, findings };

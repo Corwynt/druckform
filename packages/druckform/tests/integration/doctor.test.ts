@@ -49,4 +49,17 @@ describe("druck doctor", () => {
     process.env.DRUCKFORM_TEMPLATES_DIR = undefined;
     restore();
   });
+
+  it("warns when a TS component uses a token it does not declare", async () => {
+    const USER = path.resolve(import.meta.dirname, "../fixtures/templates");
+    process.env.DRUCKFORM_TEMPLATES_DIR = USER;
+    const { writes, restore } = capture();
+    await expect(doctorCommand("tokendrift", true)).rejects.toThrow("exit");
+    const out = JSON.parse(writes.join(""));
+    expect(out.findings.some((f: { message: string }) => /token 'warning'/.test(f.message))).toBe(
+      true,
+    );
+    process.env.DRUCKFORM_TEMPLATES_DIR = undefined;
+    restore();
+  });
 });
