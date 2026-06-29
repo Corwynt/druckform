@@ -7,6 +7,7 @@ import type {
   SourceMap,
   StyleConfig,
 } from "../sdk/types.js";
+import { applyFrontmatterDefaults } from "../parse/frontmatter.js";
 import { compileStyle, tokenMacro } from "../style/compiler.js";
 import { mdToLatex } from "./md-to-latex.js";
 
@@ -41,7 +42,7 @@ export function composeDocument(
 ): ComposeResult {
   const sourceMap: SourceMap = new Map();
 
-  const frontmatter = doc.frontmatter ?? {};
+  const frontmatter = applyFrontmatterDefaults(template.frontmatter, doc.frontmatter ?? {});
 
   const ctx: RenderCtx = {
     token: (name) => tokenMacro(name),

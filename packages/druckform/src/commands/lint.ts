@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { validateFrontmatter } from "../parse/frontmatter.js";
 import { parseDocument } from "../parse/parser.js";
 import type { ASTNode, Finding, LintContract, ResolvedTemplate } from "../sdk/types.js";
 import { mergeStyle } from "../style/merge.js";
@@ -62,6 +63,11 @@ export async function lintCommand(
 
   // Validate component names and required params recursively (handles nested blocks)
   lintNodes(doc.nodes, resolved, findings);
+
+  // Validate frontmatter against the template's declared schema
+  if (resolved.frontmatter) {
+    findings.push(...validateFrontmatter(resolved.frontmatter, doc.frontmatter));
+  }
 
   // Token coverage against the effective style (template style + optional external override)
   if (resolved.style || stylePath) {

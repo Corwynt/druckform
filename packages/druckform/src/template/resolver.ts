@@ -1,6 +1,11 @@
 import path from "node:path";
 import { loadComponent } from "../component/loader.js";
-import type { ResolvedComponentEntry, ResolvedTemplate, StyleConfig } from "../sdk/types.js";
+import type {
+  FrontmatterSpec,
+  ResolvedComponentEntry,
+  ResolvedTemplate,
+  StyleConfig,
+} from "../sdk/types.js";
 import { mergeStyle } from "../style/merge.js";
 import type { TemplateEntry } from "./loader.js";
 
@@ -22,12 +27,16 @@ export async function resolveTemplate(
   >();
 
   let mergedStyle: StyleConfig | undefined;
+  let mergedFrontmatter: FrontmatterSpec | undefined;
 
   for (const tplName of chain) {
     const entry = allTemplates.get(tplName);
     if (!entry) throw new Error(`Template not found in chain: ${tplName}`);
 
     if (entry.config.style) mergedStyle = mergeStyle(mergedStyle, entry.config.style);
+    if (entry.config.frontmatter) {
+      mergedFrontmatter = { ...(mergedFrontmatter ?? {}), ...entry.config.frontmatter };
+    }
 
     for (const [compName, override] of Object.entries(entry.config.components ?? {})) {
       if (override === null) {
@@ -75,6 +84,7 @@ export async function resolveTemplate(
     origin: leafEntry.origin,
     extendsChain: chain,
     ...(mergedStyle ? { style: mergedStyle } : {}),
+    ...(mergedFrontmatter ? { frontmatter: mergedFrontmatter } : {}),
     components,
   };
 }

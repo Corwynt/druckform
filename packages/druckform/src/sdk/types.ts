@@ -151,12 +151,20 @@ export interface ComponentOverrideSpec {
   defaults?: Record<string, string>;
 }
 
+/** Per-field frontmatter declaration (validated like component params). */
+export type FrontmatterSpec = Record<
+  string,
+  { type?: "string"; required?: boolean; default?: string }
+>;
+
 export interface TemplateConfig {
   name: string;
   description?: string;
   extends?: string;
   /** Inline default style; merged down the extends chain and under any external override. */
   style?: StyleConfig;
+  /** Frontmatter fields this template accepts; merged down the extends chain. */
+  frontmatter?: FrontmatterSpec;
   components: Record<string, ComponentOverrideSpec | null>;
 }
 
@@ -172,6 +180,8 @@ export interface ResolvedTemplate {
   extendsChain: string[];
   /** Style merged down the extends chain (root → leaf). */
   style?: StyleConfig;
+  /** Frontmatter schema merged down the extends chain (root → leaf). */
+  frontmatter?: FrontmatterSpec;
   components: Record<string, ResolvedComponentEntry>;
 }
 
