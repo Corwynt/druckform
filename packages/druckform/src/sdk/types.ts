@@ -188,6 +188,7 @@ export type ASTNode =
 
 export interface ParsedDocument {
   nodes: ASTNode[];
+  frontmatter: Record<string, string>;
 }
 
 // ── LaTeX source map ─────────────────────────────────────────────────────────

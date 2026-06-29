@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import yaml from "js-yaml";
 import type { ASTNode, ComponentBlock, ParsedDocument } from "../sdk/types.js";
 
 const OPEN_RE = /^:::\s+(\S+)(.*)?$/;
@@ -14,17 +15,40 @@ function parseAttrs(attrStr: string): Record<string, string> {
   return attrs;
 }
 
+// Detects a leading `---` … `---` YAML frontmatter block. Only a `---` on the
+// very first line with a later closing `---` counts; otherwise the leading `---`
+// is ordinary content (e.g. a GFM horizontal rule). Body source-line numbers are
+// preserved because the body is parsed from `bodyStart` against the same array.
+function extractFrontmatter(lines: string[]): {
+  frontmatter: Record<string, string>;
+  bodyStart: number;
+} {
+  if (lines[0]?.trim() !== "---") return { frontmatter: {}, bodyStart: 0 };
+  let close = -1;
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i]?.trim() === "---") {
+      close = i;
+      break;
+    }
+  }
+  if (close < 0) return { frontmatter: {}, bodyStart: 0 };
+  const parsed = (yaml.load(lines.slice(1, close).join("\n")) ?? {}) as Record<string, unknown>;
+  const frontmatter: Record<string, string> = {};
+  for (const [k, v] of Object.entries(parsed)) {
+    if (v !== null && typeof v !== "object") frontmatter[k] = String(v);
+  }
+  return { frontmatter, bodyStart: close + 1 };
+}
+
 export function parseDocument(filePath: string): ParsedDocument {
-  const content = fs.readFileSync(filePath, "utf8");
-  const lines = content.split("\n");
-  const [nodes] = parseLines(lines, 0);
-  return { nodes };
+  return parseMarkdownString(fs.readFileSync(filePath, "utf8"));
 }
 
 export function parseMarkdownString(content: string): ParsedDocument {
   const lines = content.split("\n");
-  const [nodes] = parseLines(lines, 0);
-  return { nodes };
+  const { frontmatter, bodyStart } = extractFrontmatter(lines);
+  const [nodes] = parseLines(lines, bodyStart);
+  return { nodes, frontmatter };
 }
 
 function parseLines(lines: string[], startLine: number): [ASTNode[], number] {
