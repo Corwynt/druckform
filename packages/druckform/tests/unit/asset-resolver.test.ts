@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import type { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -58,7 +58,9 @@ describe("createAssetResolver", () => {
 
 describe("convertSvgToPdf", () => {
   it("throws an actionable error when rsvg-convert is missing (ENOENT)", () => {
-    const fakeSpawn = (() => ({ error: Object.assign(new Error("x"), { code: "ENOENT" }) })) as unknown as typeof spawnSync;
+    const fakeSpawn = (() => ({
+      error: Object.assign(new Error("x"), { code: "ENOENT" }),
+    })) as unknown as typeof spawnSync;
     expect(() => convertSvgToPdf("/a.svg", "/b.pdf", fakeSpawn)).toThrow(/rsvg-convert/);
   });
 

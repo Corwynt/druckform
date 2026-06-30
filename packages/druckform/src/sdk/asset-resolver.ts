@@ -10,12 +10,15 @@ type SpawnFn = typeof spawnSync;
  * diagram pipeline already requires. Hard-errors with an actionable message if
  * the binary is missing or conversion fails.
  */
-export function convertSvgToPdf(svgPath: string, outPath: string, spawn: SpawnFn = spawnSync): void {
+export function convertSvgToPdf(
+  svgPath: string,
+  outPath: string,
+  spawn: SpawnFn = spawnSync,
+): void {
   const res = spawn("rsvg-convert", ["-f", "pdf", "-o", outPath, svgPath], { encoding: "utf8" });
   if (res.error && (res.error as NodeJS.ErrnoException).code === "ENOENT") {
     throw new Error(
-      `Cannot convert SVG asset '${svgPath}': the 'rsvg-convert' binary was not found. ` +
-        `Install librsvg (e.g. 'brew install librsvg') — it is the same tool druckform uses for diagrams.`,
+      `Cannot convert SVG asset '${svgPath}': the 'rsvg-convert' binary was not found. Install librsvg (e.g. 'brew install librsvg') — it is the same tool druckform uses for diagrams.`,
     );
   }
   if (res.status !== 0) {
@@ -51,6 +54,8 @@ export function createAssetResolver(opts: AssetResolverOptions): (ref: string) =
     }
     const cached = opts.cache.get(resolved);
     if (cached) return cached;
+    // `cache.size` is a monotonic counter for unique output names — the cache is
+    // append-only within a render; never delete entries or names would collide.
     const outPath = path.join(opts.workDir, `asset-${opts.cache.size}.pdf`);
     convert(resolved, outPath);
     opts.cache.set(resolved, outPath);

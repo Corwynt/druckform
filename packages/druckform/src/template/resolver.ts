@@ -76,10 +76,12 @@ export async function resolveTemplate(
   // 3. Load all component defs
   const components: Record<string, ResolvedComponentEntry> = {};
   await Promise.all(
-    [...mergedComponents.entries()].map(async ([compName, { sourcePath, templateDir, defaults }]) => {
-      const def = await loadComponent(sourcePath, "");
-      components[compName] = { def, defaults, sourcePath, templateDir };
-    }),
+    [...mergedComponents.entries()].map(
+      async ([compName, { sourcePath, templateDir, defaults }]) => {
+        const def = await loadComponent(sourcePath, "");
+        components[compName] = { def, defaults, sourcePath, templateDir };
+      },
+    ),
   );
 
   const leafEntry = allTemplates.get(name);

@@ -18,7 +18,13 @@ beforeAll(async () => {
 
 describe("composer exposes template assets to the shell", () => {
   it("splices the absolute asset path and template dir into the shell output", () => {
-    const { tex } = composeDocument(parseMarkdownString("# Hi"), template, style, new Map(), "/assets");
+    const { tex } = composeDocument(
+      parseMarkdownString("# Hi"),
+      template,
+      style,
+      new Map(),
+      "/assets",
+    );
     expect(tex).toContain(`% logo=${path.join(LOGO_DIR, "logo.pdf")}`);
     expect(tex).toContain(`% dir=${LOGO_DIR}`);
   });

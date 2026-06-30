@@ -115,5 +115,7 @@ describe("ResolvedComponentEntry.templateDir", () => {
     expect(t.components.document.templateDir).toBe(path.join(BUNDLED, "base"));
     // A component defined by `report` resolves to the report template dir.
     expect(t.components.callout.templateDir).toBe(path.join(BUNDLED, "report"));
+    // override.extends (partial override) keeps the parent's defining dir
+    expect(t.components.infobox.templateDir).toBe(path.join(BUNDLED, "base"));
   });
 });
