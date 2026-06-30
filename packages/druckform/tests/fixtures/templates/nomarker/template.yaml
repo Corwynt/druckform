@@ -1,0 +1,5 @@
+name: nomarker
+extends: base
+components:
+  document:
+    source: components/document.ts

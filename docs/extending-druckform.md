@@ -58,6 +58,7 @@ druck render \
 | `druck templates` | — | `--json` | template list |
 | `druck components` | `--template/-t` | `--json` | resolved components for a template |
 | `druck lint` | `--in` | `--template/-t` (else from frontmatter), `--style`, `--json` | `LintContract` |
+| `druck doctor` | `--template/-t` | `--json` | `LintContract` |
 | `druck render` | `--in`, `--out` | `--template/-t` (else from frontmatter), `--style` (overrides template style), `--assets` (default `.`), `--json` | `RenderContract` + PDF on disk |
 | `druck mcp` | — | — | starts the MCP server (spawns `druckform-mcp`) |
 
@@ -739,6 +740,25 @@ emits: |
 ```
 
 **Engine-core split (important):** the composer always emits `\documentclass{…}` and the non-overridable engine packages — `fontspec`, `xcolor`, `graphicx`, `hyperref`, `ulem` — **before** your shell. These are output-correctness requirements (fonts, colors, images, links, strikethrough), so a custom `document` can't break them by omission. Your shell owns everything after: it **chooses** the documentclass value (via the payload / a param) but does **not** emit the literal `\documentclass` line, and it places the style/component preambles, page setup, title block, and the `DRUCKFORM_BODY` marker. A shell that omits the body marker is rejected at compose time.
+
+### 6.6 Validate a template with `druck doctor`
+
+Before rendering, run `druck doctor -t <name>` to validate all components and config in a template without needing a document or style file:
+
+```bash
+druck doctor --template acme
+druck doctor --template acme --json   # machine-readable LintContract
+```
+
+`doctor` resolves the full `extends` chain and checks:
+
+- **Missing exports** — every registered `.ts` component exports `schema`, `meta`, and `render`.
+- **Declarative slot/param mismatches** — every `{{slot}}` in a declarative component's `emits` refers to a declared param or `children`; unused params are flagged too.
+- **Token drift** — `meta.requiredTokens` entries that are never referenced by `ctx.token()` or a `tokenRef` param in the schema (possible dead declarations or renamed tokens).
+- **Unescaped param interpolation** — TS components that splice `params.*` strings directly into LaTeX without `escapeTeX` or `Tex`.
+- **Document-shell body marker** — a `document` override that doesn't emit `DRUCKFORM_BODY` in its output (caught without running tectonic).
+
+`doctor` exits zero and prints nothing when all checks pass. Any finding exits non-zero. Use it as a lightweight authoring gate in CI or before handing a template off to others.
 
 ---
 

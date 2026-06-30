@@ -1,6 +1,7 @@
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { componentsCommand } from "./commands/components.js";
+import { doctorCommand } from "./commands/doctor.js";
 import { lintCommand } from "./commands/lint.js";
 import { mcpCommand } from "./commands/mcp.js";
 import { renderCommand } from "./commands/render.js";
@@ -39,6 +40,17 @@ yargs(hideBin(process.argv))
         .option("json", { type: "boolean", default: false }),
     async (argv) => {
       await lintCommand(argv.template, argv.in, argv.style, argv.json);
+    },
+  )
+  .command(
+    "doctor",
+    "Validate a template's components and config (authoring lint)",
+    (y) =>
+      y
+        .option("template", { alias: "t", type: "string", demandOption: true })
+        .option("json", { type: "boolean", default: false }),
+    async (argv) => {
+      await doctorCommand(argv.template, argv.json);
     },
   )
   .command(

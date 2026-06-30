@@ -40,6 +40,7 @@ See [docs/authoring.md](docs/authoring.md) for the document format and [the skil
 druck templates [--json]
 druck components --template <name> [--json]
 druck lint     --in <file> [--template <name>] [--style <file>] [--json]
+druck doctor   --template <name> [--json]
 druck render   --in <file> --out <file> [--template <name>] [--style <file>] [--json]
 #   --template is optional: falls back to the document's `template:` frontmatter
 druck mcp      # start MCP + HTTP server on stdio

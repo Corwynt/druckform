@@ -69,7 +69,7 @@ export async function resolveTemplate(
   await Promise.all(
     [...mergedComponents.entries()].map(async ([compName, { sourcePath, defaults }]) => {
       const def = await loadComponent(sourcePath, "");
-      components[compName] = { def, defaults };
+      components[compName] = { def, defaults, sourcePath };
     }),
   );
 

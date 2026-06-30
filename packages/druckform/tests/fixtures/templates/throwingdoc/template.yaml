@@ -1,0 +1,5 @@
+name: throwingdoc
+extends: base
+components:
+  document:
+    source: components/document.ts

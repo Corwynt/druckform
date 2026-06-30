@@ -171,6 +171,7 @@ export interface TemplateConfig {
 export interface ResolvedComponentEntry {
   def: ComponentDef;
   defaults: Record<string, string>; // merged param defaults from inheritance chain
+  sourcePath: string; // absolute path to the component's source file
 }
 
 export interface ResolvedTemplate {

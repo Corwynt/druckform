@@ -1,0 +1,5 @@
+name: badslot
+extends: base
+components:
+  card:
+    source: components/typo.component.yaml
