@@ -93,7 +93,7 @@ Interpolation: `string` params → `escapeTeX`-escaped; `token` params → `ctx.
 
 Only populated for:
 - **`block:*` components** — receives a typed `BlockElement` (`kind: "heading" | "table" | "list" | "codeblock" | "blockquote" | "image" | "hr"`).
-- **`document` shell** — receives `DocumentLayout` (`kind: "document"`, `stylePreamble`, `componentPreamble`, `bodyMarker`).
+- **`document` shell** — receives `DocumentLayout` (`kind: "document"`, `documentclass`, `stylePreamble`, `componentPreamble`, `frontmatter`). The body marker is **not** a payload field — a TS shell emits the literal string `DRUCKFORM_BODY`; a declarative (YAML) shell writes `{{body}}` in its `emits:`.
 
 Guard on `kind` and fall back gracefully for `:::` components (element is undefined).
 
