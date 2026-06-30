@@ -1,7 +1,13 @@
 import fs from "node:fs";
 import path from "node:path";
 import yaml from "js-yaml";
-import type { Finding, LintContract, ResolvedTemplate } from "../sdk/types.js";
+import type {
+  DocumentLayout,
+  Finding,
+  LintContract,
+  RenderCtx,
+  ResolvedTemplate,
+} from "../sdk/types.js";
 import { loadAllTemplates } from "../template/loader.js";
 import { resolveTemplate } from "../template/resolver.js";
 
@@ -68,6 +74,32 @@ function checkTsSource(resolved: ResolvedTemplate, findings: Finding[]): void {
   }
 }
 
+function checkDocumentShell(resolved: ResolvedTemplate, findings: Finding[]): void {
+  const entry = resolved.components.document;
+  if (!entry) return;
+  const ctx: RenderCtx = {
+    token: (n) => `\\druck${n.charAt(0).toUpperCase()}${n.slice(1)}`,
+    style: { colors: {}, fonts: {}, spacing: {} },
+    frontmatter: {},
+  };
+  const layout: DocumentLayout = {
+    kind: "document",
+    documentclass: "article",
+    stylePreamble: "%STYLE",
+    componentPreamble: "%COMPONENTS",
+    frontmatter: {},
+  };
+  const out = entry.def.render({}, "", ctx, layout);
+  if (!out.includes("DRUCKFORM_BODY")) {
+    findings.push({
+      severity: "error",
+      component: "document",
+      message:
+        "document shell must emit the body marker DRUCKFORM_BODY (declarative: {{body}}); the composer substitutes the rendered body there",
+    });
+  }
+}
+
 const _t1 = path.resolve(new URL("../../templates", import.meta.url).pathname);
 const BUNDLED_TEMPLATES = fs.existsSync(_t1)
   ? _t1
@@ -122,6 +154,7 @@ export async function doctorCommand(template: string, json: boolean): Promise<vo
     checkMeta(resolved, findings);
     checkDeclarativeSlots(resolved, findings);
     checkTsSource(resolved, findings);
+    checkDocumentShell(resolved, findings);
   }
 
   const contract: LintContract = { schemaVersion: "1", ok: findings.length === 0, findings };

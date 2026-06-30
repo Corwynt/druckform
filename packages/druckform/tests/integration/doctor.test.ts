@@ -62,4 +62,17 @@ describe("druck doctor", () => {
     process.env.DRUCKFORM_TEMPLATES_DIR = undefined;
     restore();
   });
+
+  it("errors when a document override omits the body marker", async () => {
+    const USER = path.resolve(import.meta.dirname, "../fixtures/templates");
+    process.env.DRUCKFORM_TEMPLATES_DIR = USER;
+    const { writes, restore } = capture();
+    await expect(doctorCommand("nomarker", true)).rejects.toThrow("exit");
+    const out = JSON.parse(writes.join(""));
+    expect(
+      out.findings.some((f: { message: string }) => /body marker|DRUCKFORM_BODY/.test(f.message)),
+    ).toBe(true);
+    process.env.DRUCKFORM_TEMPLATES_DIR = undefined;
+    restore();
+  });
 });
