@@ -1,0 +1,15 @@
+name: examples
+description: "Canonical example components for authors to copy."
+extends: base
+components:
+  "block:table":
+    source: components/fancy-table.ts
+  document:
+    source: components/document.ts
+  callout:
+    source: components/callout.ts
+style:
+  tokens:
+    colors:
+      accent: "#2E5AAC"
+      warning: "#B26A00"
