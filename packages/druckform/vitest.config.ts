@@ -9,6 +9,10 @@ export default defineConfig({
       exclude: [
         "src/diagram/**",
         "src/latex/tectonic.ts",
+        // CLI entry-point: thin yargs wiring whose handlers just call command
+        // functions that are themselves tested. The argv-parsing layer isn't
+        // meaningfully unit-testable.
+        "src/cli.ts",
         "dist/**",
         "vitest.config.ts",
         "tsup.config.ts",

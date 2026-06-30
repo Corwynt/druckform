@@ -7,6 +7,7 @@ import type {
   StyleConfig,
 } from "../sdk/types.js";
 import { mergeStyle } from "../style/merge.js";
+import { discoverComponents } from "./discover.js";
 import type { TemplateEntry } from "./loader.js";
 
 export async function resolveTemplate(
@@ -36,6 +37,12 @@ export async function resolveTemplate(
     if (entry.config.style) mergedStyle = mergeStyle(mergedStyle, entry.config.style);
     if (entry.config.frontmatter) {
       mergedFrontmatter = { ...(mergedFrontmatter ?? {}), ...entry.config.frontmatter };
+    }
+
+    // Auto-discover components from the components/ directory before processing explicit entries,
+    // so explicit entries override auto-discovered ones.
+    for (const [name, sourcePath] of discoverComponents(entry)) {
+      mergedComponents.set(name, { sourcePath, defaults: {} });
     }
 
     for (const [compName, override] of Object.entries(entry.config.components ?? {})) {
