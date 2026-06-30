@@ -48,7 +48,29 @@ export async function renderToFile(
   const workDir = fs.mkdtempSync(path.join(os.tmpdir(), "druckform-"));
   try {
     const diagramMap = await prerenderDiagrams(doc, styleConfig, workDir, diagramSkinBase);
-    const { tex, sourceMap } = composeDocument(doc, resolved, styleConfig, diagramMap, assetsDir);
+    let tex: string;
+    let sourceMap: import("../sdk/types.js").SourceMap;
+    try {
+      ({ tex, sourceMap } = composeDocument(
+        doc,
+        resolved,
+        styleConfig,
+        diagramMap,
+        assetsDir,
+        workDir,
+      ));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return {
+        schemaVersion: "1",
+        status: "error",
+        pdf: null,
+        error: {
+          summary: message,
+          findings: [{ severity: "error", component: "document", message }],
+        },
+      };
+    }
     const texPath = path.join(workDir, "document.tex");
     fs.writeFileSync(texPath, tex, "utf8");
     const { ok, log } = runTectonic(texPath, outPdf);

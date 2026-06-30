@@ -81,6 +81,8 @@ function checkDocumentShell(resolved: ResolvedTemplate, findings: Finding[]): vo
     token: (n) => `\\druck${n.charAt(0).toUpperCase()}${n.slice(1)}`,
     style: { colors: {}, fonts: {}, spacing: {} },
     frontmatter: {},
+    templateDir: entry.templateDir,
+    asset: (ref) => path.join(entry.templateDir, ref),
   };
   const layout: DocumentLayout = {
     kind: "document",

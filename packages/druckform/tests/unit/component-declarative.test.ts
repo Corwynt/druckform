@@ -17,6 +17,8 @@ const ctx: RenderCtx = {
   token: (name) => `\\druck${name.charAt(0).toUpperCase() + name.slice(1)}`,
   style: { colors: {}, fonts: {}, spacing: {} },
   frontmatter: {},
+  templateDir: "/test/template",
+  asset: (ref) => path.resolve("/test/template", ref),
 };
 
 describe("loadDeclarativeComponent", () => {

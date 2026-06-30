@@ -1,9 +1,12 @@
+import os from "node:os";
 import { applyFrontmatterDefaults } from "../parse/frontmatter.js";
+import { createAssetResolver } from "../sdk/asset-resolver.js";
 import type {
   ASTNode,
   DocumentLayout,
   ParsedDocument,
   RenderCtx,
+  ResolvedComponentEntry,
   ResolvedTemplate,
   SourceMap,
   StyleConfig,
@@ -39,13 +42,14 @@ export function composeDocument(
   styleConfig: StyleConfig,
   diagramMap: Map<string, string>, // fence text → pdf path
   assetsRoot: string,
+  workDir: string = os.tmpdir(),
 ): ComposeResult {
   const sourceMap: SourceMap = new Map();
 
   const frontmatter = applyFrontmatterDefaults(template.frontmatter, doc.frontmatter ?? {});
 
-  const ctx: RenderCtx = {
-    token: (name) => tokenMacro(name),
+  const baseCtx = {
+    token: (name: string) => tokenMacro(name),
     style: {
       colors: styleConfig.tokens.colors ?? {},
       fonts: styleConfig.tokens.fonts ?? {},
@@ -53,6 +57,16 @@ export function composeDocument(
     },
     frontmatter,
   };
+
+  // Converted-SVG memo cache, shared across every component in this render.
+  const svgCache = new Map<string, string>();
+  function ctxFor(entry: ResolvedComponentEntry): RenderCtx {
+    return {
+      ...baseCtx,
+      templateDir: entry.templateDir,
+      asset: createAssetResolver({ templateDir: entry.templateDir, workDir, cache: svgCache }),
+    };
+  }
 
   const stylePreamble = compileStyle(styleConfig);
 
@@ -80,7 +94,8 @@ export function composeDocument(
     componentPreamble,
     frontmatter,
   };
-  const shell = docEntry.def.render({}, "", ctx, layout);
+  const shellCtx = ctxFor(docEntry);
+  const shell = docEntry.def.render({}, "", shellCtx, layout);
 
   // Composer-owned head (documentclass + engine core) precedes the shell output.
   const head = `\\documentclass{${documentclass}}\n${ENGINE_CORE}`;
@@ -122,7 +137,7 @@ export function composeDocument(
         text = text.replaceAll(fence, placeholder);
       }
       // mdToLatex escapes user text; placeholders are all-caps alphanumeric, won't be altered
-      let latex = mdToLatex(text, { template, ctx, assetsRoot });
+      let latex = mdToLatex(text, { template, ctx: shellCtx, assetsRoot });
       // Replace placeholders with actual LaTeX after escaping
       for (const [placeholder, latexCmd] of placeholders) {
         latex = latex.replaceAll(placeholder, latexCmd);
@@ -153,7 +168,7 @@ export function composeDocument(
     const mergedParams = { ...entry.defaults, ...block.params };
 
     // Validate and render
-    const latex = entry.def.render(mergedParams, childLatex, ctx);
+    const latex = entry.def.render(mergedParams, childLatex, ctxFor(entry));
 
     // Track only the lines added by this component's own template wrapper
     // (total lines minus the embedded child lines to avoid double-counting)

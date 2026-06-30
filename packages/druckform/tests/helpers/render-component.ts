@@ -1,12 +1,16 @@
+import path from "node:path";
 import { loadComponent } from "../../src/component/loader.js";
 import type { BlockElement, DocumentLayout, RenderCtx } from "../../src/sdk/types.js";
 
 /** A default RenderCtx for component tests; override any field via `over`. */
 export function testCtx(over: Partial<RenderCtx> = {}): RenderCtx {
+  const templateDir = "/test/template";
   return {
     token: (n) => `\\druck${n.charAt(0).toUpperCase()}${n.slice(1)}`,
     style: { colors: {}, fonts: {}, spacing: {} },
     frontmatter: {},
+    templateDir,
+    asset: (ref) => path.resolve(templateDir, ref),
     ...over,
   };
 }

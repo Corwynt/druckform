@@ -19,6 +19,8 @@ describe("frontmatter exposed to components", () => {
       token: (n) => `\\${n}`,
       style: { colors: {}, fonts: {}, spacing: {} },
       frontmatter: { title: "A&B" },
+      templateDir: "/test/template",
+      asset: (ref) => path.resolve("/test/template", ref),
     };
     expect(def.render({}, "", ctx)).toContain("FM:A\\&B");
   });

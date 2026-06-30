@@ -79,6 +79,14 @@ export interface RenderCtx {
   style: StyleTokens;
   /** Document frontmatter values (with template-schema defaults applied), e.g. title/author. */
   frontmatter: Record<string, string>;
+  /** Absolute root dir of the template that defines the calling component. */
+  templateDir: string;
+  /**
+   * Resolve a template-bundled asset to an absolute path. SVG refs are converted
+   * to PDF. Use the returned path directly in \includegraphics — it reaches
+   * tectonic's temp workdir without copying.
+   */
+  asset(ref: string): string;
 }
 
 // ── Components ──────────────────────────────────────────────────────────────
