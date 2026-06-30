@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { newComponent } from "../cli-runner.js";
-import { assertSafeTemplateName } from "../template-guard.js";
+import { assertSafeComponentName, assertSafeTemplateName } from "../template-guard.js";
 
 const schema = z.object({
   template: z.string(),
@@ -25,9 +25,14 @@ export function makeScaffoldComponentTool() {
       required: ["template", "name"],
     },
     handler: async (args: unknown) => {
+      if (!process.env.DRUCKFORM_TEMPLATES_DIR) {
+        throw new Error(
+          "scaffold_component requires DRUCKFORM_TEMPLATES_DIR to be set — refusing to write to an arbitrary working directory",
+        );
+      }
       const { template, name, kind, acceptsChildren } = schema.parse(args);
       assertSafeTemplateName(template);
-      assertSafeTemplateName(name); // same rule: bare name, no path
+      assertSafeComponentName(name);
       const result = newComponent(template, name, kind, acceptsChildren);
       return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
     },
