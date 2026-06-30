@@ -61,6 +61,8 @@ druck render \
 | `druck doctor` | `--template/-t` | `--json` | `LintContract` |
 | `druck render` | `--in`, `--out` | `--template/-t` (else from frontmatter), `--style` (overrides template style), `--assets` (default `.`), `--json` | `RenderContract` + PDF on disk |
 | `druck preview-component` | `--template/-t`, `--name`, `--out` | `--params` (JSON), `--children`, `--style`, `--watch`, `--json` | `RenderContract` + PDF on disk |
+| `druck new component` | `--name`, `--template` | `--format ts\|yaml` (default `ts`), `--accepts-children` | emits component boilerplate under the template's `components/` dir |
+| `druck new template` | `--name` | `--extends` | emits `template.yaml` boilerplate in `$DRUCKFORM_TEMPLATES_DIR/<name>/` |
 | `druck mcp` | — | — | starts the MCP server (spawns `druckform-mcp`) |
 
 `--json` makes every command emit a stable machine-readable contract (see [§9](#9-contracts--types)). `render`/`lint`/`preview-component` exit non-zero on findings.
@@ -426,7 +428,23 @@ druck render -t report --in doc.md --style brand.yaml --out out.pdf   # brand.ya
 
 Two kinds. **Use declarative YAML** for simple "wrap children in an environment" components; **use TypeScript** when you need logic, enums, computed values, or asset handling.
 
-A component file lives under a template's directory and is registered in that template's `template.yaml` `components:` map.
+### Scaffold a component
+
+The fastest way to start is `druck new component`. It emits ready-to-edit boilerplate and — because auto-discovery is on (see [§6.3](#63-the-extends-chain)) — the new file is **registered automatically**; no `template.yaml` edit required.
+
+```bash
+# TypeScript component (default):
+druck new component --template acme --name banner --accepts-children
+
+# Declarative YAML:
+druck new component --template acme --name banner --format yaml
+```
+
+The generated file appears at `<templateDir>/components/banner.ts` (or `.component.yaml`). For TS components the filename stem must match `meta.name` for auto-discovery to pick it up (doctor flags a mismatch). Explicit `template.yaml` entries still override auto-discovered ones for `defaults`/partial overrides/tombstones.
+
+> **Note for external template directories:** a TS-format component placed in an external `DRUCKFORM_TEMPLATES_DIR` only loads if `zod` and `druckform` are resolvable from that directory's module path. Standalone external template directories should prefer YAML components (or keep TS components inside the repo where the packages are already installed).
+
+A component file lives under a template's directory and is either auto-discovered (see [§6.3](#63-the-extends-chain)) or registered in that template's `template.yaml` `components:` map.
 
 ### 5.1 Declarative component (`*.component.yaml`)
 
@@ -600,7 +618,15 @@ Each component may export a `preamble` (LaTeX) injected **once** before `\begin{
 
 ### 5.5 Register the component
 
-Add it to the owning template's `template.yaml`:
+**Auto-discovery (recommended):** any file dropped in a template's `components/` directory is registered automatically — no `template.yaml` edit needed:
+
+- **TS component** (`*.ts`): registered under the filename stem (e.g. `banner.ts` → `banner`). The stem must equal `meta.name`; `druck doctor` flags a mismatch.
+- **YAML component** (`*.component.yaml`): registered under its `name:` field.
+- **`block:*` components** are never auto-discovered — they must be registered explicitly.
+
+Explicit `template.yaml` entries always win over auto-discovered files (useful for `defaults:`, partial `extends:` overrides, and tombstones).
+
+**Explicit registration** — needed only when you want to override defaults or use a non-standard path:
 
 ```yaml
 components:
@@ -650,6 +676,20 @@ export DRUCKFORM_TEMPLATES_DIR=/path/to/my-templates
 # /path/to/my-templates/acme/components/*.ts
 druck templates           # → your `acme` template now appears
 ```
+
+Use `druck new template --name acme --extends base` to scaffold the directory structure automatically.
+
+#### Auto-discovery of components
+
+Within any template directory, druckform scans the `components/` subdirectory and auto-registers files it finds there:
+
+- `*.ts` → registered under the filename stem (stem must equal `meta.name`).
+- `*.component.yaml` → registered under the `name:` field declared inside.
+- `block:*` names are **never** auto-registered — they require explicit `template.yaml` entries.
+
+Explicit `template.yaml` component entries always take precedence over auto-discovered files, so you can still override `defaults:`, use partial `extends:`, or tombstone (`null`) an auto-discovered component from a parent template.
+
+> **Note for external template directories:** TS-format components in an external `DRUCKFORM_TEMPLATES_DIR` only load if `zod` and `druckform` are resolvable from that directory's module path. Prefer YAML components in standalone external template directories (or keep TS components inside the repo where the packages are already installed).
 
 ### 6.3 The `extends` chain
 
