@@ -24,7 +24,7 @@ export async function resolveTemplate(
   // 2. Walk chain from root to leaf, merging components
   const mergedComponents = new Map<
     string,
-    { sourcePath: string; defaults: Record<string, string> }
+    { sourcePath: string; templateDir: string; defaults: Record<string, string> }
   >();
 
   let mergedStyle: StyleConfig | undefined;
@@ -42,7 +42,7 @@ export async function resolveTemplate(
     // Auto-discover components from the components/ directory before processing explicit entries,
     // so explicit entries override auto-discovered ones.
     for (const [name, sourcePath] of discoverComponents(entry)) {
-      mergedComponents.set(name, { sourcePath, defaults: {} });
+      mergedComponents.set(name, { sourcePath, templateDir: entry.dir, defaults: {} });
     }
 
     for (const [compName, override] of Object.entries(entry.config.components ?? {})) {
@@ -56,6 +56,7 @@ export async function resolveTemplate(
         const sourcePath = path.resolve(entry.dir, override.source);
         mergedComponents.set(compName, {
           sourcePath,
+          templateDir: entry.dir,
           defaults: override.defaults ?? {},
         });
       } else if (override.extends) {
@@ -64,6 +65,7 @@ export async function resolveTemplate(
         if (!existing) throw new Error(`Component ${compName} extends unknown parent`);
         mergedComponents.set(compName, {
           sourcePath: existing.sourcePath,
+          templateDir: existing.templateDir,
           defaults: { ...existing.defaults, ...(override.defaults ?? {}) },
         });
       }
@@ -74,9 +76,9 @@ export async function resolveTemplate(
   // 3. Load all component defs
   const components: Record<string, ResolvedComponentEntry> = {};
   await Promise.all(
-    [...mergedComponents.entries()].map(async ([compName, { sourcePath, defaults }]) => {
+    [...mergedComponents.entries()].map(async ([compName, { sourcePath, templateDir, defaults }]) => {
       const def = await loadComponent(sourcePath, "");
-      components[compName] = { def, defaults, sourcePath };
+      components[compName] = { def, defaults, sourcePath, templateDir };
     }),
   );
 

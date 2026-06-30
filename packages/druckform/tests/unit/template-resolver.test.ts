@@ -106,3 +106,14 @@ describe("resolveTemplate", () => {
     await expect(resolveTemplate("a", all)).rejects.toThrow("Circular");
   });
 });
+
+describe("ResolvedComponentEntry.templateDir", () => {
+  it("points at the dir of the template that defines each component", async () => {
+    const BUNDLED = path.resolve(import.meta.dirname, "../../templates");
+    const t = await resolveTemplate("report", loadAllTemplates(BUNDLED));
+    // An inherited shell from `base` resolves to the base template dir.
+    expect(t.components.document.templateDir).toBe(path.join(BUNDLED, "base"));
+    // A component defined by `report` resolves to the report template dir.
+    expect(t.components.callout.templateDir).toBe(path.join(BUNDLED, "report"));
+  });
+});

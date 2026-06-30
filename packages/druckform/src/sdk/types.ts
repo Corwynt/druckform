@@ -178,6 +178,7 @@ export interface ResolvedComponentEntry {
   def: ComponentDef;
   defaults: Record<string, string>; // merged param defaults from inheritance chain
   sourcePath: string; // absolute path to the component's source file
+  templateDir: string; // absolute root dir of the template that defines this component
 }
 
 export interface ResolvedTemplate {
