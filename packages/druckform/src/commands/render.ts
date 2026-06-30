@@ -6,7 +6,12 @@ import { composeDocument } from "../latex/composer.js";
 import { mapErrors, summarizeFinding } from "../latex/error-mapper.js";
 import { runTectonic } from "../latex/tectonic.js";
 import { parseDocument } from "../parse/parser.js";
-import type { RenderContract } from "../sdk/types.js";
+import type {
+  ParsedDocument,
+  RenderContract,
+  ResolvedTemplate,
+  StyleConfig,
+} from "../sdk/types.js";
 import { mergeStyle } from "../style/merge.js";
 import { checkTokenCoverage, extractRequiredTokens } from "../style/tokens.js";
 import { loadStyle } from "../style/validate.js";
@@ -19,6 +24,48 @@ const _t1 = path.resolve(new URL("../../templates", import.meta.url).pathname);
 const BUNDLED_TEMPLATES = fs.existsSync(_t1)
   ? _t1
   : path.resolve(new URL("../templates", import.meta.url).pathname);
+
+export async function renderToFile(
+  doc: ParsedDocument,
+  resolved: ResolvedTemplate,
+  styleConfig: StyleConfig,
+  assetsDir: string,
+  outPdf: string,
+  diagramSkinBase: string,
+): Promise<RenderContract> {
+  // Required-token check before invoking LaTeX
+  const required = extractRequiredTokens(resolved);
+  const tokenFindings = checkTokenCoverage(required, resolved, styleConfig);
+  if (tokenFindings.length > 0) {
+    return {
+      schemaVersion: "1",
+      status: "error",
+      pdf: null,
+      error: { summary: summarizeFinding(tokenFindings), findings: tokenFindings },
+    };
+  }
+
+  const workDir = fs.mkdtempSync(path.join(os.tmpdir(), "druckform-"));
+  try {
+    const diagramMap = await prerenderDiagrams(doc, styleConfig, workDir, diagramSkinBase);
+    const { tex, sourceMap } = composeDocument(doc, resolved, styleConfig, diagramMap, assetsDir);
+    const texPath = path.join(workDir, "document.tex");
+    fs.writeFileSync(texPath, tex, "utf8");
+    const { ok, log } = runTectonic(texPath, outPdf);
+    if (ok) {
+      return { schemaVersion: "1", status: "ok", pdf: outPdf };
+    }
+    const findings = mapErrors(log, sourceMap);
+    return {
+      schemaVersion: "1",
+      status: "error",
+      pdf: null,
+      error: { summary: summarizeFinding(findings), findings },
+    };
+  } finally {
+    fs.rmSync(workDir, { recursive: true, force: true });
+  }
+}
 
 export async function renderCommand(
   templateArg: string | undefined,
@@ -50,49 +97,17 @@ export async function renderCommand(
   const externalStyle = stylePath ? loadStyle(stylePath) : undefined;
   const styleConfig = mergeStyle(resolved.style, externalStyle);
 
-  // Required-token check before invoking LaTeX
-  const required = extractRequiredTokens(resolved);
-  const tokenFindings = checkTokenCoverage(required, resolved, styleConfig);
-  if (tokenFindings.length > 0) {
-    const contract: RenderContract = {
-      schemaVersion: "1",
-      status: "error",
-      pdf: null,
-      error: { summary: summarizeFinding(tokenFindings), findings: tokenFindings },
-    };
-    emitResult(contract, json);
-    process.exit(1);
-  }
-
-  const workDir = fs.mkdtempSync(path.join(os.tmpdir(), "druckform-"));
-
-  try {
-    const diagramSkinBase = stylePath ? path.dirname(stylePath) : assetsDir;
-    const diagramMap = await prerenderDiagrams(doc, styleConfig, workDir, diagramSkinBase);
-    const { tex, sourceMap } = composeDocument(doc, resolved, styleConfig, diagramMap, assetsDir);
-
-    const texPath = path.join(workDir, "document.tex");
-    fs.writeFileSync(texPath, tex, "utf8");
-
-    const { ok, log } = runTectonic(texPath, outPdf);
-
-    if (ok) {
-      const contract: RenderContract = { schemaVersion: "1", status: "ok", pdf: outPdf };
-      emitResult(contract, json);
-    } else {
-      const findings = mapErrors(log, sourceMap);
-      const contract: RenderContract = {
-        schemaVersion: "1",
-        status: "error",
-        pdf: null,
-        error: { summary: summarizeFinding(findings), findings },
-      };
-      emitResult(contract, json);
-      process.exit(1);
-    }
-  } finally {
-    fs.rmSync(workDir, { recursive: true, force: true });
-  }
+  const diagramSkinBase = stylePath ? path.dirname(stylePath) : assetsDir;
+  const contract = await renderToFile(
+    doc,
+    resolved,
+    styleConfig,
+    assetsDir,
+    outPdf,
+    diagramSkinBase,
+  );
+  emitResult(contract, json);
+  if (contract.status === "error") process.exit(1);
 }
 
 function emitError(message: string, json: boolean): void {
