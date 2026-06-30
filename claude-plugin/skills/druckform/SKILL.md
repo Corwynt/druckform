@@ -16,6 +16,7 @@ Convert Markdown with composable components into styled PDFs via LaTeX. Two bina
 | `list_components` | `template: string` | `{ schemaVersion: "1", template, components: [{ name, description, params, acceptsChildren, example }] }` |
 | `render_document` | `template: string, style: string` | `{ job_id, upload_url, download_url, expires_at, manifest_spec }` |
 | `render_markdown` | `document: string, template?, style?` | `{ job_id, download_url, expires_at }` or `{ status: "error", error }` |
+| `preview_component` | `template: string, name: string, params?, children?` | `{ job_id, download_url, expires_at }` or `{ status: "error", error }` — quickly preview one `:::` component with sample params; defaults to the component's `meta.example` when params/children are omitted |
 | `validate_document` | `job_id: string` | `{ schemaVersion: "1", ok: bool, findings: [{ severity, component, message, line? }] }` |
 | `finalize_job` | `job_id: string` | `{ status: "ok", download_url }` or `{ status: "error", error: { summary, findings } }` |
 | `list_job_files` | `job_id: string` | `{ job_id, files: [{ name, size, checksum }] }` |

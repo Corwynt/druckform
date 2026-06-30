@@ -41,8 +41,9 @@ druck templates [--json]
 druck components --template <name> [--json]
 druck lint     --in <file> [--template <name>] [--style <file>] [--json]
 druck doctor   --template <name> [--json]
-druck render   --in <file> --out <file> [--template <name>] [--style <file>] [--json]
+druck render            --in <file> --out <file> [--template <name>] [--style <file>] [--json]
 #   --template is optional: falls back to the document's `template:` frontmatter
+druck preview-component --template <name> --name <component> --out <file> [--params <json>] [--children <text>] [--style <file>] [--watch] [--json]
 druck mcp      # start MCP + HTTP server on stdio
 ```
 

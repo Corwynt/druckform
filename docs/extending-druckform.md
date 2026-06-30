@@ -60,9 +60,38 @@ druck render \
 | `druck lint` | `--in` | `--template/-t` (else from frontmatter), `--style`, `--json` | `LintContract` |
 | `druck doctor` | `--template/-t` | `--json` | `LintContract` |
 | `druck render` | `--in`, `--out` | `--template/-t` (else from frontmatter), `--style` (overrides template style), `--assets` (default `.`), `--json` | `RenderContract` + PDF on disk |
+| `druck preview-component` | `--template/-t`, `--name`, `--out` | `--params` (JSON), `--children`, `--style`, `--watch`, `--json` | `RenderContract` + PDF on disk |
 | `druck mcp` | — | — | starts the MCP server (spawns `druckform-mcp`) |
 
-`--json` makes every command emit a stable machine-readable contract (see [§9](#9-contracts--types)). `render`/`lint` exit non-zero on findings.
+`--json` makes every command emit a stable machine-readable contract (see [§9](#9-contracts--types)). `render`/`lint`/`preview-component` exit non-zero on findings.
+
+#### Preview a component
+
+`druck preview-component` renders a single `:::` component — no full document required. It targets `:::` fence components (not `block:*` built-ins) and is the fastest authoring feedback loop for component authors.
+
+```bash
+druck preview-component \
+  -t base \
+  --name infobox \
+  --params '{"title":"Note"}' \
+  --children 'Body text here.' \
+  --out /tmp/p.pdf
+```
+
+When `--params` and `--children` are omitted, the component's `meta.example` is used as the default input — so a bare invocation gives you a working preview immediately:
+
+```bash
+druck preview-component -t base --name infobox --out /tmp/p.pdf
+```
+
+Use `--watch` to re-render on every change to the component source file (useful while editing a component implementation):
+
+```bash
+druck preview-component -t base --name infobox --out /tmp/p.pdf --watch
+# Stays running; re-renders each time the component file is saved.
+```
+
+Note: `--params` values are interpolated into `key="value"` fence attributes, so values containing double-quotes are not supported (matches the parser's attribute regex).
 
 > **Token check happens before LaTeX.** If a component declares `requiredTokens` your style doesn't provide, `render` exits with an error finding and never invokes tectonic. See [§4.4](#44-token-coverage-the-one-gotcha).
 
@@ -78,6 +107,7 @@ The MCP server exposes **5 tools**. Rendering is a job: create → upload a ZIP 
 | `list_components` | `template: string` | `{ schemaVersion, template, components: [{ name, description, params, acceptsChildren, example? }] }` |
 | `render_document` | `template: string, style: string` | `{ job_id, upload_url, download_url, expires_at, manifest_spec }` |
 | `render_markdown` | `document: string, template?, style?` | `{ job_id, download_url, expires_at }` **or** `{ status: "error", error }` |
+| `preview_component` | `template: string, name: string, params?, children?` | `{ job_id, download_url, expires_at }` **or** `{ status: "error", error }` |
 | `validate_document` | `job_id: string` | `{ schemaVersion, ok, findings }` |
 | `finalize_job` | `job_id: string` | `{ status: "ok", download_url }` **or** `{ status: "error", error: { summary, findings } }` |
 | `list_job_files` | `job_id: string` | `{ job_id, files: [{ name, size, checksum }] }` |
