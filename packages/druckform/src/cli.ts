@@ -114,14 +114,19 @@ yargs(hideBin(process.argv))
         .option("template", { type: "string", describe: "target template (for kind=component)" })
         .option("extends", { type: "string", describe: "parent template (for kind=template)" })
         .option("format", { choices: ["ts", "yaml"] as const, default: "ts" })
-        .option("accepts-children", { type: "boolean", default: false }),
+        .option("accepts-children", { type: "boolean", default: false })
+        .option("json", { type: "boolean", default: false }),
     (argv) => {
       if (argv.kind === "template") {
         const { file } = newTemplate({
           name: argv.name,
           ...(argv.extends ? { extends: argv.extends } : {}),
         });
-        console.log(`✓ Created template ${file}`);
+        if (argv.json) {
+          process.stdout.write(`${JSON.stringify({ created: [file] })}\n`);
+        } else {
+          console.log(`✓ Created template ${file}`);
+        }
       } else {
         if (!argv.template) throw new Error("--template is required for: druck new component");
         const { file, test } = newComponent({
@@ -130,7 +135,12 @@ yargs(hideBin(process.argv))
           kind: argv.format as "ts" | "yaml",
           acceptsChildren: argv["accepts-children"],
         });
-        console.log(`✓ Created component ${file}${test ? ` (+ test ${test})` : ""}`);
+        if (argv.json) {
+          const created = test ? [file, test] : [file];
+          process.stdout.write(`${JSON.stringify({ created })}\n`);
+        } else {
+          console.log(`✓ Created component ${file}${test ? ` (+ test ${test})` : ""}`);
+        }
       }
     },
   )

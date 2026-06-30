@@ -3,8 +3,11 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import {
+  doctorTemplate,
   listComponents,
   listTemplates,
+  newComponent,
+  newTemplate,
   previewComponent,
   renderDocument,
 } from "../src/cli-runner.js";
@@ -57,5 +60,44 @@ describe("cli-runner", () => {
     const result = renderDocument(undefined, undefined, inFile, tmp, path.join(tmp, "out.pdf"));
     expect(result.status).toBe("error");
     expect(result.error?.summary).toBeTruthy();
+  });
+
+  it("doctorTemplate returns a LintContract for the base template", () => {
+    const result = doctorTemplate("base");
+    expect(result.schemaVersion).toBe("1");
+    expect(typeof result.ok).toBe("boolean");
+  });
+
+  it("newComponent scaffolds into DRUCKFORM_TEMPLATES_DIR", () => {
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "cli-new-"));
+    // a minimal user template to scaffold into
+    fs.mkdirSync(path.join(tmp, "acme", "components"), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmp, "acme", "template.yaml"),
+      "name: acme\nextends: base\ncomponents: {}\n",
+      "utf8",
+    );
+    const prev = process.env.DRUCKFORM_TEMPLATES_DIR;
+    process.env.DRUCKFORM_TEMPLATES_DIR = tmp;
+    try {
+      const result = newComponent("acme", "banner", "ts", true);
+      expect(result.created.length).toBeGreaterThan(0);
+      expect(fs.existsSync(path.join(tmp, "acme", "components", "banner.ts"))).toBe(true);
+    } finally {
+      process.env.DRUCKFORM_TEMPLATES_DIR = prev;
+    }
+  });
+
+  it("newTemplate scaffolds a new template directory into DRUCKFORM_TEMPLATES_DIR", () => {
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "cli-new-tpl-"));
+    const prev = process.env.DRUCKFORM_TEMPLATES_DIR;
+    process.env.DRUCKFORM_TEMPLATES_DIR = tmp;
+    try {
+      const result = newTemplate("mytemplate", "base");
+      expect(result.created.length).toBeGreaterThan(0);
+      expect(fs.existsSync(path.join(tmp, "mytemplate", "template.yaml"))).toBe(true);
+    } finally {
+      process.env.DRUCKFORM_TEMPLATES_DIR = prev;
+    }
   });
 });

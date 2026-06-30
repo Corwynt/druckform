@@ -69,6 +69,34 @@ export function previewComponent(
   }
 }
 
+export function doctorTemplate(template: string): LintContract {
+  const { stdout, stderr } = run(["doctor", "--template", template]);
+  try {
+    return JSON.parse(stdout) as LintContract;
+  } catch {
+    throw new Error(
+      `druck doctor produced no parseable contract: ${stderr || stdout || "(empty)"}`,
+    );
+  }
+}
+
+export function newComponent(
+  template: string,
+  name: string,
+  kind: "ts" | "yaml",
+  acceptsChildren: boolean,
+): { created: string[] } {
+  const args = ["new", "component", "--template", template, "--name", name, "--format", kind];
+  if (acceptsChildren) args.push("--accepts-children");
+  return JSON.parse(runOrThrow(args)) as { created: string[] };
+}
+
+export function newTemplate(name: string, extendsName?: string): { created: string[] } {
+  const args = ["new", "template", "--name", name];
+  if (extendsName) args.push("--extends", extendsName);
+  return JSON.parse(runOrThrow(args)) as { created: string[] };
+}
+
 export function renderDocument(
   template: string | undefined,
   stylePath: string | undefined,
