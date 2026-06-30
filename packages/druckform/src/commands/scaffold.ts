@@ -78,12 +78,22 @@ describe("${name}", () => {
 `;
 }
 
+const RESERVED_COMPONENT_NAMES = new Set(["document"]);
+
 export function newComponent(opts: {
   template: string;
   name: string;
   kind: "ts" | "yaml";
   acceptsChildren: boolean;
 }): { file: string; test?: string } {
+  if (opts.name.startsWith("block:")) {
+    throw new Error(
+      `Component name '${opts.name}' uses the reserved 'block:' prefix. These are built-in GFM block components and cannot be user-scaffolded.`,
+    );
+  }
+  if (RESERVED_COMPONENT_NAMES.has(opts.name)) {
+    throw new Error(`Component name '${opts.name}' is reserved and cannot be user-scaffolded.`);
+  }
   const tplDir = path.join(resolveUserTemplatesDir(), opts.template);
   if (!fs.existsSync(path.join(tplDir, "template.yaml"))) {
     throw new Error(

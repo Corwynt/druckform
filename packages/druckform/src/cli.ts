@@ -6,6 +6,7 @@ import { lintCommand } from "./commands/lint.js";
 import { mcpCommand } from "./commands/mcp.js";
 import { previewComponentCommand } from "./commands/preview-component.js";
 import { renderCommand } from "./commands/render.js";
+import { newComponent, newTemplate } from "./commands/scaffold.js";
 import { templatesCommand } from "./commands/templates.js";
 
 yargs(hideBin(process.argv))
@@ -101,6 +102,36 @@ yargs(hideBin(process.argv))
     () => {},
     () => {
       mcpCommand();
+    },
+  )
+  .command(
+    "new <kind>",
+    "Scaffold a template or component",
+    (y) =>
+      y
+        .positional("kind", { choices: ["template", "component"] as const, demandOption: true })
+        .option("name", { type: "string", demandOption: true })
+        .option("template", { type: "string", describe: "target template (for kind=component)" })
+        .option("extends", { type: "string", describe: "parent template (for kind=template)" })
+        .option("format", { choices: ["ts", "yaml"] as const, default: "ts" })
+        .option("accepts-children", { type: "boolean", default: false }),
+    (argv) => {
+      if (argv.kind === "template") {
+        const { file } = newTemplate({
+          name: argv.name,
+          ...(argv.extends ? { extends: argv.extends } : {}),
+        });
+        console.log(`✓ Created template ${file}`);
+      } else {
+        if (!argv.template) throw new Error("--template is required for: druck new component");
+        const { file, test } = newComponent({
+          template: argv.template,
+          name: argv.name,
+          kind: argv.format as "ts" | "yaml",
+          acceptsChildren: argv["accepts-children"],
+        });
+        console.log(`✓ Created component ${file}${test ? ` (+ test ${test})` : ""}`);
+      }
     },
   )
   .demandCommand(1, "Specify a subcommand.")
