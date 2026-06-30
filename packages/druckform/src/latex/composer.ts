@@ -132,11 +132,16 @@ export function composeDocument(
       const placeholders = new Map<string, string>();
       let idx = 0;
       for (const [fence, pdfPath] of diagramMap) {
-        const placeholder = `DRUCKFORM_DIAGRAM_${idx++}`;
+        // Placeholder must survive mdToLatex's escapeTeX untouched: letters and
+        // digits only (no `_` — escapeTeX turns `_` into `\_`, which would break
+        // the post-pass replaceAll below). The `END` terminator keeps no index a
+        // prefix of another (e.g. "...1END" never matches inside "...10END").
+        const placeholder = `DRUCKFORMDIAGRAM${idx++}END`;
         placeholders.set(placeholder, `\\includegraphics[width=\\linewidth]{${pdfPath}}`);
         text = text.replaceAll(fence, placeholder);
       }
-      // mdToLatex escapes user text; placeholders are all-caps alphanumeric, won't be altered
+      // mdToLatex escapes user text; the placeholder is letters+digits only, so it
+      // passes through escapeTeX unaltered and the replaceAll below matches.
       let latex = mdToLatex(text, { template, ctx: shellCtx, assetsRoot });
       // Replace placeholders with actual LaTeX after escaping
       for (const [placeholder, latexCmd] of placeholders) {
