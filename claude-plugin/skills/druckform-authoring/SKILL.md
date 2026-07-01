@@ -18,16 +18,17 @@ scaffold → edit → doctor → preview → iterate
 | `druck new component --template <t> --name <n>` | `scaffold_component` |
 | `druck doctor --template <t>` | `validate_component` |
 | `druck preview-component -t <t> --name <n> --out /tmp/p.pdf` | `preview_component` |
-| `list_components` | returns `source`, `acceptsElement`, `contractVersion` in addition to the consume fields |
+| `list_components` | returns `source`, `acceptsElement`, `form`, `contractVersion` in addition to the consume fields |
 
 `druck doctor` validates the full template (all components, extends chain) without a document or style file — run it before every preview. `preview-component` uses `meta.example` when `--params`/`--children` are omitted.
 
 Add `--watch` to `preview-component` to re-render on every save while editing.
 
-`preview-component`/`preview_component` only previews `:::`-invoked components. The
-`document` shell and `block:*` overrides are renderer-internal and cannot be
-previewed in isolation — iterate on them with a full `render` against a small test
-document instead.
+`preview-component`/`preview_component` previews any registered `inline`, `leaf`, or
+`container` component — it synthesizes the directive in the component's own `form`
+(from `meta.form`), so the preview exercises the real render path. The `document`
+shell and `block:*` overrides are renderer-internal and cannot be previewed in
+isolation — iterate on them with a full `render` against a small test document instead.
 
 ## Directive Components (inline / leaf / container)
 

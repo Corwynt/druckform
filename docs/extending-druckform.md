@@ -69,7 +69,7 @@ druck render \
 
 #### Preview a component
 
-`druck preview-component` renders a single `:::` component — no full document required. It targets `:::` fence components (not `block:*` built-ins) and is the fastest authoring feedback loop for component authors.
+`druck preview-component` renders a single component — no full document required. It synthesizes the directive in the component's own `form` (inline `:name[…]{…}`, leaf `::name[…]{…}`, or container `:::name{…} … :::`, from `meta.form`), so the preview exercises the same render path a real document would. It does not target `block:*` built-ins or the `document` shell (renderer-internal). It is the fastest authoring feedback loop for component authors.
 
 It cannot preview the `document` shell or `block:*` overrides in isolation — both
 are renderer-internal and are never invoked as a `:::` block (see [§6.5](#65-overriding-the-document-shell-page-layout)
@@ -111,10 +111,10 @@ The MCP server exposes tools for rendering and for component authoring. Renderin
 | Tool | Input | Returns |
 |------|-------|---------|
 | `list_templates` | — | `{ schemaVersion, templates: [{ name, extends, origin, description? }] }` |
-| `list_components` | `template: string` | `{ schemaVersion, template, components: [{ name, description, params, acceptsChildren, example?, source, acceptsElement, contractVersion }] }` ¹ |
+| `list_components` | `template: string` | `{ schemaVersion, template, components: [{ name, description, params, acceptsChildren, example?, source, acceptsElement, form, contractVersion }] }` ¹ |
 | `render_document` | `template: string, style: string` | `{ job_id, upload_url, download_url, expires_at, manifest_spec }` |
 | `render_markdown` | `document: string, template?, style?` | `{ job_id, download_url, expires_at }` **or** `{ status: "error", error }` |
-| `preview_component` | `template: string, name: string, params?, children?` | `{ job_id, download_url, expires_at }` **or** `{ status: "error", error }` — only for `:::`-invoked components; the `document` shell and `block:*` overrides cannot be previewed this way |
+| `preview_component` | `template: string, name: string, params?, children?` | `{ job_id, download_url, expires_at }` **or** `{ status: "error", error }` — previews any inline/leaf/container component (synthesized in its own `form`); the `document` shell and `block:*` overrides cannot be previewed this way |
 | `validate_document` | `job_id: string` | `{ schemaVersion, ok, findings }` |
 | `finalize_job` | `job_id: string` | `{ status: "ok", download_url }` **or** `{ status: "error", error: { summary, findings } }` |
 | `list_job_files` | `job_id: string` | `{ job_id, files: [{ name, size, checksum }] }` |
@@ -123,7 +123,7 @@ The MCP server exposes tools for rendering and for component authoring. Renderin
 | `validate_component` | `template: string` | `LintContract` — runs `druck doctor` on a user template; requires `DRUCKFORM_TEMPLATES_DIR` |
 | `scaffold_component` | `template: string, name: string, kind?: "ts"\|"yaml", acceptsChildren?: boolean` | `{ created: string[] }` — runs `druck new component`; requires `DRUCKFORM_TEMPLATES_DIR` |
 
-> ¹ **Enriched `list_components` fields:** each component entry now includes `source` (the resolved file path, `"built-in"` for `block:*` components), `acceptsElement` (true for `block:*` components that receive a typed `BlockElement` payload), and `contractVersion` (the component contract semver, currently `"1"`). These fields are useful for authoring agents that need to distinguish user-defined components from built-ins.
+> ¹ **Enriched `list_components` fields:** each component entry now includes `source` (the resolved file path, `"built-in"` for `block:*` components), `acceptsElement` (true for `block:*` components that receive a typed `BlockElement` payload), `form` (the directive form — `"inline"`, `"leaf"`, or `"container"`; defaults to `"container"`), and `contractVersion` (the component contract semver, currently `"1"`). These fields are useful for authoring agents that need to distinguish user-defined components from built-ins and know how each is invoked.
 
 **Authoring tooling for agents:** for interactive component authoring inside an agent session, use the [`druckform-authoring` skill](../claude-plugin/skills/druckform-authoring/SKILL.md) instead of calling these tools directly. It encodes the full contract, drives the scaffold → doctor → preview loop, and points to the [examples gallery](examples-gallery.md) for working reference components.
 
@@ -1242,7 +1242,7 @@ All `--json` / MCP outputs share `schemaVersion: "1"`.
 interface Finding { severity: "error" | "warning"; component: string; message: string; line?: number; }
 
 interface TemplatesContract  { schemaVersion: "1"; templates: Array<{ name; extends: string|null; origin: "bundled"|"user"; description? }>; }
-interface ComponentsContract { schemaVersion: "1"; template: string; components: Array<{ name; description; params; acceptsChildren; example?; source: string; acceptsElement: boolean; contractVersion: string }>; }
+interface ComponentsContract { schemaVersion: "1"; template: string; components: Array<{ name; description; params; acceptsChildren; example?; source: string; acceptsElement: boolean; form: "inline" | "leaf" | "container"; contractVersion: string }>; }
 interface LintContract       { schemaVersion: "1"; ok: boolean; findings: Finding[]; }
 interface RenderContract     { schemaVersion: "1"; status: "ok"|"error"; pdf: string|null; error?: { summary; findings: Finding[] }; }
 ```

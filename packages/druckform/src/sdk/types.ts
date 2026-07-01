@@ -31,6 +31,7 @@ export interface ComponentsContract {
     params: Record<string, unknown>; // JSON Schema
     acceptsChildren: boolean;
     acceptsElement: boolean; // reads the BlockElement/DocumentLayout payload
+    form: "inline" | "leaf" | "container"; // directive form the component fires in
     contractVersion: string;
     example?: string;
     source?: string; // raw component source text
