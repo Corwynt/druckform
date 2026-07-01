@@ -24,7 +24,7 @@ export async function prerenderDiagrams(
       const fence = match[0] ?? "";
       const content = match[1] ?? "";
       if (!results.has(fence)) {
-        results.set(fence, renderMermaid(content, styleConfig, workDir, mermaidIdx++));
+        results.set(fence, renderMermaid(content, styleConfig, workDir, mermaidIdx++, styleDir));
       }
     }
     for (const match of text.matchAll(new RegExp(PLANTUML_FENCE.source, "gm"))) {
