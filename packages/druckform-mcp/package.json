@@ -1,9 +1,16 @@
 {
   "name": "@druckform/mcp",
   "version": "0.1.0",
-  "private": true,
   "description": "MCP adapter for druckform — HTTP upload/download + job lifecycle",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/druckform/druckform.git",
+    "directory": "packages/druckform-mcp"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": { "node": ">=22" },
   "type": "module",
   "main": "./dist/index.js",

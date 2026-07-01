@@ -56,7 +56,10 @@ jobs:
           commit: "chore: version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # setup-node wrote an .npmrc that reads NODE_AUTH_TOKEN; `changeset publish`
+          # (→ npm publish) authenticates with it. Scoped packages publish publicly
+          # via each package's publishConfig.access=public + .changeset access:public.
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # Only push Docker image when packages were actually published
       - name: Log in to GHCR
