@@ -1,0 +1,5 @@
+name: inlinetheme
+extends: base
+components:
+  badge:
+    source: ./badge.component.yaml

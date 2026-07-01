@@ -176,9 +176,26 @@ function renderTable(tokens: Token[], open: number, close: number, opts: EmitOpt
 
 function renderInline(token: Token | undefined, opts: EmitOpts): string {
   if (!token || !token.children) return token ? escapeTeX(token.content) : "";
+  return renderInlineChildren(token.children, opts);
+}
+
+function renderInlineChildren(children: Token[], opts: EmitOpts): string {
   let out = "";
-  for (const c of token.children) {
+  for (const c of children) {
     switch (c.type) {
+      case "directive_inline": {
+        const name = (c.meta as { name?: string } | undefined)?.name ?? "";
+        const params = (c.meta as { params?: Record<string, string> } | undefined)?.params ?? {};
+        const inner = c.children ? renderInlineChildren(c.children, opts) : "";
+        const entry = opts.template.components[name];
+        if (!entry || entry.def.meta.form !== "inline") {
+          throw new Error(
+            `Unknown inline component ':${name}' — no registered component with form "inline" in template '${opts.template.name}'.`,
+          );
+        }
+        out += entry.def.render(params, inner, opts.ctx);
+        break;
+      }
       case "text":
         out += escapeTeX(c.content);
         break;

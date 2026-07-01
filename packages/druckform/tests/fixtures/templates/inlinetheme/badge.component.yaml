@@ -1,0 +1,7 @@
+name: badge
+description: inline badge
+form: inline
+params: {}
+slots:
+  children: true
+emits: "\\fbox{{{children}}}"

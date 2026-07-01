@@ -1,7 +1,9 @@
 import MarkdownIt from "markdown-it";
+import { inlineDirectivePlugin } from "./inline-directive.js";
 import { type EmitOpts, tokensToLatex } from "./tokens-to-latex.js";
 
 const md = new MarkdownIt({ html: false, linkify: true });
+md.use(inlineDirectivePlugin);
 
 /**
  * Convert a Markdown text node to LaTeX. Inline marks are emitted directly;
