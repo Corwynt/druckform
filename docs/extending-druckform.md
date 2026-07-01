@@ -71,6 +71,11 @@ druck render \
 
 `druck preview-component` renders a single `:::` component — no full document required. It targets `:::` fence components (not `block:*` built-ins) and is the fastest authoring feedback loop for component authors.
 
+It cannot preview the `document` shell or `block:*` overrides in isolation — both
+are renderer-internal and are never invoked as a `:::` block (see [§6.5](#65-overriding-the-document-shell-page-layout)
+and [§7](#7-built-in-block-elements-gfm)). Iterate on those with a full `druck render`
+against a small test document instead.
+
 ```bash
 druck preview-component \
   -t base \
@@ -109,7 +114,7 @@ The MCP server exposes tools for rendering and for component authoring. Renderin
 | `list_components` | `template: string` | `{ schemaVersion, template, components: [{ name, description, params, acceptsChildren, example?, source, acceptsElement, contractVersion }] }` ¹ |
 | `render_document` | `template: string, style: string` | `{ job_id, upload_url, download_url, expires_at, manifest_spec }` |
 | `render_markdown` | `document: string, template?, style?` | `{ job_id, download_url, expires_at }` **or** `{ status: "error", error }` |
-| `preview_component` | `template: string, name: string, params?, children?` | `{ job_id, download_url, expires_at }` **or** `{ status: "error", error }` |
+| `preview_component` | `template: string, name: string, params?, children?` | `{ job_id, download_url, expires_at }` **or** `{ status: "error", error }` — only for `:::`-invoked components; the `document` shell and `block:*` overrides cannot be previewed this way |
 | `validate_document` | `job_id: string` | `{ schemaVersion, ok, findings }` |
 | `finalize_job` | `job_id: string` | `{ status: "ok", download_url }` **or** `{ status: "error", error: { summary, findings } }` |
 | `list_job_files` | `job_id: string` | `{ job_id, files: [{ name, size, checksum }] }` |
@@ -322,6 +327,33 @@ emits: |
   \section*{{{fm.title}}}
 ```
 
+#### Reading frontmatter in the document shell
+
+The document shell receives frontmatter twice: on the `DocumentLayout` payload
+(`element.frontmatter`) and mirrored on `ctx.frontmatter` (same values — either is
+fine to read). A typical title block:
+
+```ts
+import { escapeTeX, type DocumentLayout, type RenderCtx } from "druckform";
+
+export function render(_p: unknown, _c: string, ctx: RenderCtx, el?: DocumentLayout) {
+  const fm = (el as DocumentLayout).frontmatter; // === ctx.frontmatter
+  const title = escapeTeX(fm.title ?? "");
+  const subtitle = escapeTeX(fm.subtitle ?? "");
+  return [
+    (el as DocumentLayout).stylePreamble,
+    "\\begin{document}",
+    `{\\Huge\\bfseries ${title}\\par}`,
+    subtitle ? `{\\Large ${subtitle}\\par}` : "",
+    "DRUCKFORM_BODY",
+    "\\end{document}",
+  ].join("\n");
+}
+```
+
+(This example omits `componentPreamble` and the engine-core packages for brevity —
+a real shell must still emit `el.componentPreamble` per [§6.5](#65-overriding-the-document-shell-page-layout).)
+
 ---
 
 ## 4. Styles (`style.yaml`)
@@ -341,6 +373,8 @@ tokens:
   fonts:
     main: "Liberation Serif"    # → \setmainfont  (needs the font installed)
     mono: "Liberation Mono"     # → \setmonofont
+    # OR, with fontspec options:
+    # main: { name: "Noto Sans", options: "AutoFakeBold=2.2" }
   spacing:                      # name → any CSS/TeX length
     blockGap: "0.8em"
 diagrams:                       # optional
@@ -370,6 +404,30 @@ diagrams:                       # optional
 
 So token `accent` → color name **and** macro `\druckAccent`; token `blockGap` → length `\druckBlockGap`.
 
+**Font options for variable fonts (bold not rendering).** A font token may be a
+bare string or `{ name, options }`; `options` is spliced as `\setmainfont{name}[options]`.
+This matters for variable fonts — e.g. Noto Sans on macOS ships as a variable-only
+font — which can leave `\bfseries` silently rendering as Regular weight, because
+fontspec can't select a distinct Bold instance from a single variable font file.
+Fix it by setting a fontspec option via the token:
+
+```yaml
+fonts:
+  main: { name: "Noto Sans", options: "AutoFakeBold=2.2" }
+```
+
+which compiles to:
+
+```latex
+\setmainfont{Noto Sans}[AutoFakeBold=2.2]
+```
+
+⚠️ **There is no `\setsansfont`.** Only `fonts.main` (→ `\setmainfont`) and
+`fonts.mono` (→ `\setmonofont`) are emitted — there is no `fonts.sans` token and no
+`\sffamily` configuration. If `fonts.main` is itself a sans-serif font, body text
+inherits it (LaTeX's default family is `\rmfamily`, driven by `\setmainfont`); there
+is no separate mechanism to configure `\sffamily` output.
+
 ### 4.3 How components reference tokens
 
 At render time components get a `RenderCtx`:
@@ -378,11 +436,49 @@ At render time components get a `RenderCtx`:
 interface RenderCtx {
   token(name: string): string;   // "accent" → "\\druckAccent"  (the macro NAME)
   style: StyleTokens;            // raw values: { colors, fonts, spacing }
+  frontmatter: Record<string, string>;   // document frontmatter, defaults applied
+  templateDir: string;           // absolute root dir of the defining template
+  asset(ref: string): string;    // resolve a template-bundled file to an absolute path
 }
 ```
 
+(`frontmatter`, `templateDir`, and `asset` are covered in [§3.4](#34-frontmatter)
+and [§5.4](#54-template-bundled-assets-ctxasset-ctxtemplatedir).)
+
+`ctx.style` exposes the raw token values as-is from the resolved style —
+`{ colors: Record<string,string>, fonts: { main?: FontSpec, mono?: FontSpec }, spacing: Record<string,string> }`
+(no `druck` prefixing, no macro wrapping). Reach for it when a shell or component
+needs the raw value rather than a LaTeX macro, e.g. `ctx.style.fonts.main` to read
+the configured main font name/options directly — as distinct from `ctx.token(name)`,
+which always returns the `\druck<Name>` macro string.
+
 - TS component: `ctx.token("accent")` → the string `\druckAccent` to splice into LaTeX.
 - Declarative component: a `token`-typed param's `{{slot}}` is replaced by `ctx.token(...)`.
+
+#### Tokens: color name vs. switch macro
+
+A style color token `accent` compiles to **both**:
+- a color **named** `druckAccent` (use in color-key arguments, no backslash), and
+- a switch **macro** `\druckAccent` (use in running text to switch color).
+
+`ctx.token("accent")` returns the **macro** form (`\druckAccent`). Use the **name**
+(`druckAccent`) in color arguments:
+
+```latex
+% tcolorbox
+\begin{tcolorbox}[colframe=druckAccent, colback=druckAccent!6, coltitle=druckAccent]
+...
+\end{tcolorbox}
+
+% colortbl
+\rowcolor{druckAccent}  \arrayrulecolor{druckAccent}
+
+% xcolor mix
+\color{druckMuted!30}
+```
+
+Splicing `ctx.token("accent")` (→ `\druckAccent`) into a `colframe=`/`\rowcolor{}`
+argument breaks — those need the bare **name**.
 
 ### 4.4 Token coverage (the one gotcha)
 
@@ -398,6 +494,32 @@ fonts.mono present  → "fontMono"   ⚠ NOT "mono"
 ```
 
 ⚠️ **Fonts are special:** to satisfy a `requiredTokens: ["fontMain"]`, your style must set `tokens.fonts.main`. There is no token literally named `main`.
+
+**Declaring extra required tokens on a declarative component.** A `*.component.yaml`
+file may declare a top-level `requiredTokens: [tokenA, tokenB]` list (separate from
+`params`):
+
+```yaml
+name: warningBox
+params:
+  title: { type: string, required: true }
+requiredTokens: [warning]
+preamble: |
+  \newenvironment{warningBox}{...}{...}
+emits: |
+  \begin{warningBox}
+  {{children}}
+  \end{warningBox}
+```
+
+This is required whenever a token is used only in hardcoded `emits`/`preamble` LaTeX
+(e.g. a literal `colframe=druckWarning` baked into `preamble`) rather than through a
+`token`-typed param. **Doctor's token-coverage check does not scan `emits`/`preamble`
+text for `druck<Name>` references** — only param-derived tokens (`token`-typed params,
+`tokenRef()` in TS schemas) and declared `requiredTokens` are tracked. A token used
+only in raw LaTeX and never declared this way will silently skip coverage checking —
+render succeeds even if the style is missing that color, and you only find out from a
+LaTeX-level "undefined color" failure.
 
 ### 4.5 Where style comes from (template style + optional override)
 
@@ -586,6 +708,11 @@ export const schema = z.object({
 // no meta.requiredTokens needed — "accent" is derived from the schema and coverage-checked
 ```
 
+`z` is re-exported from `"druckform"` (the same zod instance the package uses
+internally), so `tokenRef` and `z` can come from one import. `import { z } from "zod";`
+also works — both point at the same package as long as `zod` is resolvable
+(see the external-template-directory note above).
+
 `meta.requiredTokens` still works and is unioned with the derived set, so existing
 components (like `callout` above) keep functioning unchanged.
 
@@ -628,11 +755,38 @@ Rules of thumb:
 - **Do** wrap `children` and `ctx.token(...)` in `raw(...)` inside `Tex` (they're trusted/pre-rendered).
 - Images: pass user refs through `resolveAssetPath(assetsRoot, ref)`.
 
-### 5.4 Component preambles
+### 5.4 Template-bundled assets (`ctx.asset`, `ctx.templateDir`)
+
+Components and the document shell can reference files that ship inside the
+template directory:
+
+- **`ctx.asset(ref)`** — resolves `ref` against the template dir, returns an
+  **absolute** path (safe to use directly in `\includegraphics`), and
+  auto-converts `.svg` refs to PDF. Requires the `rsvg-convert` binary for SVG
+  (the same tool the diagram pipeline uses) — a missing binary is a hard error
+  (`brew install librsvg` on macOS). Resolution is against the **defining**
+  template's dir — i.e. the template that declares the component, which may be
+  a parent in the `extends` chain, not necessarily the leaf template being
+  rendered. SVG→PDF conversions are memoized per render (same source path never
+  reconverted twice).
+- **`ctx.templateDir`** — the raw absolute template root, for `\input`, a
+  bundled `.sty` file, or fontspec `Path=...`.
+
+Logo in the running header (in the `document` shell):
+
+```ts
+return raw(`\\includegraphics[height=8mm]{${ctx.asset("logo.svg")}}`);
+```
+
+`ctx.asset` throws if the referenced file doesn't exist under the template dir
+(`Template asset not found: '<ref>' (looked in <templateDir>)`) and rejects path
+traversal the same way `resolveAssetPath` does for document-relative assets.
+
+### 5.5 Component preambles
 
 Each component may export a `preamble` (LaTeX) injected **once** before `\begin{document}`. Identical preambles across components are **deduplicated** (set-based, trimmed). Put `\usepackage{...}` and environment/macro definitions here. (`minted` is forbidden — tectonic runs without shell-escape.)
 
-### 5.5 Register the component
+### 5.6 Register the component
 
 **Auto-discovery (recommended):** any file dropped in a template's `components/` directory is registered automatically — no `template.yaml` edit needed:
 
@@ -860,6 +1014,11 @@ GFM block-level Markdown is rendered by built-in components in the **`base`** te
 | `block:blockquote` | `>` → `quote` | — |
 | `block:codeblock` | fenced code → `lstlisting` | `listings` |
 | `block:image` | `![alt](src)` → `\includegraphics` | `adjustbox` |
+
+`block:image` resolves each Markdown image `src` against the document's **assets
+root** — the `--assets <dir>` CLI flag (default `"."`; see the [CLI reference](#cli-reference))
+or the ZIP bundle's `assets/` dir over MCP — to an absolute path via `resolveAssetPath`
+before emitting `\includegraphics`.
 | `block:hr` | `---` → `\rule` | — |
 
 ### 7.1 The `element` payload
@@ -966,14 +1125,17 @@ SDK surface importable from `druckform` (for TS components):
 
 ```ts
 // values
-import { escapeTeX, Tex, raw, RawTeX, resolveAssetPath } from "druckform";
+import { escapeTeX, Tex, raw, RawTeX, resolveAssetPath, z, tokenRef } from "druckform";
 // types
 import type {
-  Component, ComponentDef, ComponentMeta, RenderCtx, BlockElement,
+  Component, ComponentDef, ComponentMeta, RenderCtx, BlockElement, DocumentLayout,
   StyleConfig, StyleTokens, Finding,
   ResolvedTemplate, LintContract, RenderContract, TemplatesContract, ComponentsContract,
 } from "druckform";
 ```
+
+(`FontSpec` is a type used inside `StyleTokens`/`StyleConfig` but is not itself
+re-exported from `druckform` — reference it structurally as `{ name: string; options?: string }` or via `StyleTokens["fonts"]["main"]`.)
 
 ---
 
