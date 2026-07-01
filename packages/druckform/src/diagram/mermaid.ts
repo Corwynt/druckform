@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { missingToolError } from "../engine/tool-error.js";
 import { resolveAssetPath } from "../sdk/asset-path.js";
 import type { StyleConfig } from "../sdk/types.js";
 
@@ -54,6 +55,9 @@ export function renderMermaid(
   args.push("-c", configFile);
 
   const result = spawnSync("mmdc", args, { encoding: "utf8" });
+  if (result.error && (result.error as NodeJS.ErrnoException).code === "ENOENT") {
+    throw missingToolError("mmdc");
+  }
   if (result.status !== 0) {
     throw new Error(`mermaid rendering failed: ${result.stderr}`);
   }
@@ -69,6 +73,9 @@ export function renderMermaid(
   const pdfResult = spawnSync("rsvg-convert", ["-f", "pdf", "-o", pdfFile, svgFile], {
     encoding: "utf8",
   });
+  if (pdfResult.error && (pdfResult.error as NodeJS.ErrnoException).code === "ENOENT") {
+    throw missingToolError("rsvg-convert");
+  }
   if (pdfResult.status !== 0) {
     throw new Error(`SVG→PDF conversion failed: ${pdfResult.stderr}`);
   }

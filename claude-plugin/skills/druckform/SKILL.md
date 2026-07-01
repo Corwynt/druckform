@@ -1,69 +1,61 @@
 ---
 name: druckform
-description: Use when rendering Markdown documents to PDF with druckform, invoking druckform MCP tools, or authoring druckform-format documents with components and styles.
-compatibility: Requires the druckform MCP server (configured automatically via this plugin's mcpServers entry). curl and zip must be available in the session PATH.
+description: Use when rendering Markdown documents to PDF with druckform, invoking the druck CLI, or authoring druckform-format documents with components and styles.
+compatibility: Requires the `druck` CLI on PATH (from the `druckform` package). Renders locally when tectonic/rsvg-convert/mmdc/java are installed, otherwise auto-relays to Docker.
 ---
 
 # Druckform
 
-Convert Markdown with composable components into styled PDFs via LaTeX. Two binaries: `druck` (CLI) and a druckform MCP server (used by Claude Code).
+Convert Markdown with composable components into styled PDFs via LaTeX, using the `druck` CLI.
 
-## MCP Tools
+## CLI Commands
 
-| Tool | Parameters | Returns |
-|------|-----------|---------|
-| `list_templates` | — | `{ schemaVersion: "1", templates: [{ name, extends, origin, description }] }` |
-| `list_components` | `template: string` | `{ schemaVersion: "1", template, components: [{ name, description, params, acceptsChildren, example, source, acceptsElement, form, contractVersion }] }` — `source` is the resolved file path (`"built-in"` for `block:*`); `acceptsElement` is true for block components; `form` is `"inline"`/`"leaf"`/`"container"`; `contractVersion` is `"1"` |
-| `render_document` | `template: string, style: string` | `{ job_id, upload_url, download_url, expires_at, manifest_spec }` |
-| `render_markdown` | `document: string, template?, style?` | `{ job_id, download_url, expires_at }` or `{ status: "error", error }` |
-| `preview_component` | `template: string, name: string, params?, children?` | `{ job_id, download_url, expires_at }` or `{ status: "error", error }` — quickly preview one inline/leaf/container component (synthesized in its own `form`) with sample params; defaults to the component's `meta.example` when params/children are omitted |
-| `validate_document` | `job_id: string` | `{ schemaVersion: "1", ok: bool, findings: [{ severity, component, message, line? }] }` |
-| `finalize_job` | `job_id: string` | `{ status: "ok", download_url }` or `{ status: "error", error: { summary, findings } }` |
-| `list_job_files` | `job_id: string` | `{ job_id, files: [{ name, size, checksum }] }` |
-| `refresh_job` | `job_id: string` | `{ job_id, upload_url, download_url, expires_at }` |
-| `delete_job` | `job_id: string` | `{ status: "deleted", job_id }` |
-| `validate_component` | `template: string` | `LintContract` — validates a user template via `druck doctor`; requires `DRUCKFORM_TEMPLATES_DIR` |
-| `scaffold_component` | `template: string, name: string, kind?: "ts"\|"yaml", acceptsChildren?: boolean` | `{ created: string[] }` — scaffolds component boilerplate via `druck new component`; requires `DRUCKFORM_TEMPLATES_DIR` |
+| Command | Required flags | Optional flags | Output |
+|---------|----------------|-----------------|--------|
+| `druck templates` | — | `--json` | list of available templates |
+| `druck components -t <template>` | `--template/-t` | `--json` | resolved components for a template (name, description, params, `acceptsChildren`, `example`, `source`, `acceptsElement`, `form`, `contractVersion`) |
+| `druck lint --in <md>` | `--in` | `--template/-t` (else from frontmatter), `--style`, `--json` | `LintContract` — validates without rendering |
+| `druck render` | `--in`, `--out` | `--template/-t`, `--style`, `--assets` (default `.`), `--engine`, `--json` | `RenderContract` + PDF on disk |
+| `druck preview-component` | `--template/-t`, `--name`, `--out` | `--params` (JSON), `--children`, `--style`, `--watch`, `--engine`, `--json` | `RenderContract` + PDF on disk — fast one-component preview |
+| `druck new component --template <t> --name <n>` | `--name`, `--template` | `--format ts\|yaml`, `--accepts-children` | scaffolds component boilerplate |
+| `druck new template --name <n>` | `--name` | `--extends` | scaffolds a `template.yaml` |
 
-**Component authoring:** for authoring components or templates inside a Claude Code session, invoke the `druckform-authoring` skill — it encodes the full component/template contract, the scaffold → doctor → preview loop, and the examples gallery.
-
-**Edit loop (delta uploads):** a job persists, so to re-render after a tweak: `list_job_files` (get checksums) → diff locally → `refresh_job` (fresh URLs) → upload a zip of only the changed files (it merges over the job dir; unchanged assets are reused) → `finalize_job`. `delete_job` cleans up.
-
-**Asset-less documents:** prefer `render_markdown({ document })` — it renders inline Markdown text to PDF with no ZIP and no upload, returning a `download_url` directly. `template`/`style` are optional (template may come from frontmatter, style from the template). Use the `render_document` → upload → `finalize_job` flow below only when you have assets (images, `.puml` skins).
+**Component authoring:** for authoring components or templates, invoke the `druckform-authoring` skill — it encodes the full component/template contract, the scaffold → doctor → preview loop, and the examples gallery.
 
 ## Workflow
 
-Always follow this sequence:
+1. **Discover** — `druck templates` (list templates), then `druck components -t <template> --json`. Read every component's `example` field to understand syntax and required params.
 
-1. **Discover** — call `list_templates`, then `list_components` for the chosen template. Read every component's `example` field to understand syntax and required params.
+2. **Write the document** — a Markdown file with optional YAML frontmatter and `:::` component fences (see Document Format below). Put any images/diagram skins in an assets directory.
 
-2. **Call `render_document`** with the chosen template name and the style path within the zip (e.g. `"style.yaml"`). Returns `job_id`, `upload_url`, `download_url`.
-
-3. **Build and upload the ZIP bundle**:
+3. **Validate (cheap, recommended)**:
    ```bash
-   # Assemble the bundle in a temp directory
-   mkdir /tmp/druckform-bundle
-   cp document.md /tmp/druckform-bundle/
-   cp style.yaml /tmp/druckform-bundle/
-   cp -r assets/ /tmp/druckform-bundle/assets/ 2>/dev/null || true
-   cd /tmp/druckform-bundle && zip -r /tmp/bundle.zip .
-   # Upload
-   curl -X PUT -H "Content-Type: application/octet-stream" \
-     --data-binary @/tmp/bundle.zip \
-     "<upload_url>"
+   druck lint --template report --in document.md --style style.yaml
    ```
+   Fix any findings before rendering.
 
-4. **Validate** (recommended before finalize):
-   Call `validate_document(job_id)` — if `ok` is false, fix the document and re-upload (start a new `render_document` job).
-
-5. **Finalize** — call `finalize_job(job_id)`. On `status: "ok"`, use the returned `download_url`.
-
-6. **Download**:
+4. **Render**:
    ```bash
-   curl -o output.pdf "<download_url>"
+   druck render \
+     --template report \
+     --style   style.yaml \
+     --in      document.md \
+     --assets  ./assets \
+     --out     out.pdf
    ```
+   `--style` is optional if the template carries its own style — pass it only to override. `--template` is optional if the document's frontmatter declares `template:`.
 
-**Important:** The `upload_url` and `download_url` expire in 15 minutes. Keep the workflow contiguous. Each URL is single-use.
+That's the whole loop — `render` writes the PDF directly to `--out`; there is no separate upload/download step.
+
+## Execution engines
+
+`druck render` and `druck preview-component` pick where the render actually happens:
+
+- `--engine local` — run with the tools on this machine (`tectonic`, `rsvg-convert`, `mmdc`, `java`).
+- `--engine docker` — relay the same command into a Docker container (default image `ghcr.io/corwynt/druckform:<cli-version>`; override with `DRUCK_DOCKER_IMAGE`).
+- `--engine auto` (default) — probe for the four local tools; if all are present, run locally, otherwise relay to Docker automatically. The `DRUCK_ENGINE` environment variable sets the same choice (`local`/`docker`/`auto`) when `--engine` isn't passed.
+
+In `auto` mode a boot report (which tools were found/missing and which engine was chosen) is printed to **stderr**, so `--json` output on stdout stays clean. When relaying to Docker, paths are mounted identically (same path inside the container as outside), so `--in`/`--out`/`--assets`/`--style` need no rewriting. This applies only to `render` and `preview-component` — all other commands (`templates`, `components`, `lint`, `doctor`, `new`) always run locally.
 
 ## Document Format
 
@@ -84,7 +76,7 @@ Children content (Markdown, may contain nested components)
 :::
 ```
 
-Frontmatter values are available to components (e.g. a title block). A template may declare which frontmatter fields it accepts (and which are required) — `validate_document` reports missing required fields. (For the MCP flow, still pass `template` to `render_document` explicitly.)
+Frontmatter values are available to components (e.g. a title block). A template may declare which frontmatter fields it accepts (and which are required) — `druck lint` reports missing required fields.
 
 Components can be nested:
 
@@ -97,7 +89,7 @@ Nested content.
 :::
 ```
 
-Call `list_components` to get each component's exact parameter names, types, required status, and a working example.
+Run `druck components -t <template>` to get each component's exact parameter names, types, required status, and a working example.
 
 ## Diagrams
 
@@ -120,18 +112,15 @@ Alice -> Bob: Hello
 
 Place any `.puml` skin files in `assets/` and reference them in `style.yaml` via `diagrams.plantuml.skinRef`.
 
-## ZIP Bundle Layout
+## Directory Layout
 
 ```
-bundle.zip
-├── document.md       # required — the source document
-├── style.yaml        # required — path passed as `style` arg to render_document
-└── assets/           # optional
-    ├── logo.png
-    └── skin.puml
+document.md       # the source document
+style.yaml        # optional — overrides the template's own style
+assets/           # optional
+├── logo.png
+└── skin.puml
 ```
-
-The `style` parameter to `render_document` is the path to the YAML file within the ZIP (relative to the ZIP root). Example: pass `"style.yaml"` if the file is at the root; `"styles/corporate.yaml"` if nested.
 
 ## Style File (style.yaml)
 
@@ -156,13 +145,13 @@ All color values must be `#RRGGBB` (6 hex digits). The `tokens` block is require
 
 ## Error Handling
 
-`finalize_job` returns `{ status: "error", error: { summary, findings } }` on failure.
+`druck render`/`druck lint` exit non-zero and report findings on failure (or with `--json`, emit a `LintContract`/`RenderContract` with `ok: false` / `status: "error"`).
 
 Each finding has `{ severity, component, message, line? }` — `line` is the source line in `document.md`.
 
 Common errors:
-- Missing required param → `validate_document` catches this before LaTeX runs
-- Unknown component name → `validate_document` reports it as an error finding
-- LaTeX compile failure → `finalize_job` returns findings attributed to source lines
+- Missing required param → `druck lint` catches this before LaTeX runs
+- Unknown component name → `druck lint` reports it as an error finding
+- LaTeX compile failure → `druck render` returns findings attributed to source lines
 
-Always run `validate_document` before `finalize_job` to catch authoring errors cheaply.
+Always run `druck lint` before `druck render` to catch authoring errors cheaply.

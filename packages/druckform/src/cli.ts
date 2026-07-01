@@ -8,10 +8,15 @@ import { previewComponentCommand } from "./commands/preview-component.js";
 import { renderCommand } from "./commands/render.js";
 import { newComponent, newTemplate } from "./commands/scaffold.js";
 import { templatesCommand } from "./commands/templates.js";
+import { runWithEngine } from "./engine/run.js";
 
 yargs(hideBin(process.argv))
   .scriptName("druck")
   .usage("$0 <command> [options]")
+  .option("engine", {
+    choices: ["local", "docker", "auto"] as const,
+    describe: "Execution engine: run locally, in Docker, or auto-detect (default auto)",
+  })
   .command(
     "templates",
     "List available templates",
@@ -67,7 +72,13 @@ yargs(hideBin(process.argv))
         .option("out", { type: "string", demandOption: true })
         .option("json", { type: "boolean", default: false }),
     async (argv) => {
-      await renderCommand(argv.template, argv.style, argv.in, argv.assets, argv.out, argv.json);
+      await runWithEngine({
+        engineFlag: argv.engine,
+        rawArgs: hideBin(process.argv),
+        paths: { in: argv.in, out: argv.out, assets: argv.assets, style: argv.style },
+        local: () =>
+          renderCommand(argv.template, argv.style, argv.in, argv.assets, argv.out, argv.json),
+      });
     },
   )
   .command(
@@ -84,16 +95,22 @@ yargs(hideBin(process.argv))
         .option("watch", { type: "boolean", default: false })
         .option("json", { type: "boolean", default: false }),
     async (argv) => {
-      await previewComponentCommand(
-        argv.template,
-        argv.name,
-        argv.params,
-        argv.children,
-        argv.style,
-        argv.out,
-        argv.json,
-        argv.watch,
-      );
+      await runWithEngine({
+        engineFlag: argv.engine,
+        rawArgs: hideBin(process.argv),
+        paths: { out: argv.out, style: argv.style },
+        local: () =>
+          previewComponentCommand(
+            argv.template,
+            argv.name,
+            argv.params,
+            argv.children,
+            argv.style,
+            argv.out,
+            argv.json,
+            argv.watch,
+          ),
+      });
     },
   )
   .command(

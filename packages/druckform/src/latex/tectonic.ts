@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { missingToolError } from "../engine/tool-error.js";
 
 export interface TectonicResult {
   ok: boolean;
@@ -23,6 +24,10 @@ export function runTectonic(texPath: string, outputPdf: string): TectonicResult 
     ],
     { encoding: "utf8", maxBuffer: 10 * 1024 * 1024 },
   );
+
+  if (result.error && (result.error as NodeJS.ErrnoException).code === "ENOENT") {
+    throw missingToolError("tectonic");
+  }
 
   const log = (result.stdout ?? "") + (result.stderr ?? "");
 

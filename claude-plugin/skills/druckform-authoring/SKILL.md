@@ -13,22 +13,24 @@ Author and validate custom components and templates for the druckform render pip
 scaffold → edit → doctor → preview → iterate
 ```
 
-| CLI | MCP equivalent |
-|-----|----------------|
-| `druck new component --template <t> --name <n>` | `scaffold_component` |
-| `druck doctor --template <t>` | `validate_component` |
-| `druck preview-component -t <t> --name <n> --out /tmp/p.pdf` | `preview_component` |
-| `list_components` | returns `source`, `acceptsElement`, `form`, `contractVersion` in addition to the consume fields |
+| Step | Command |
+|------|---------|
+| Scaffold | `druck new component --template <t> --name <n>` |
+| Validate | `druck doctor --template <t>` |
+| Preview | `druck preview-component -t <t> --name <n> --out /tmp/p.pdf` |
+| Inspect | `druck components -t <t> --json` — returns `source`, `acceptsElement`, `form`, `contractVersion` in addition to the consume fields |
 
 `druck doctor` validates the full template (all components, extends chain) without a document or style file — run it before every preview. `preview-component` uses `meta.example` when `--params`/`--children` are omitted.
 
 Add `--watch` to `preview-component` to re-render on every save while editing.
 
-`preview-component`/`preview_component` previews any registered `inline`, `leaf`, or
+`preview-component` previews any registered `inline`, `leaf`, or
 `container` component — it synthesizes the directive in the component's own `form`
 (from `meta.form`), so the preview exercises the real render path. The `document`
 shell and `block:*` overrides are renderer-internal and cannot be previewed in
 isolation — iterate on them with a full `render` against a small test document instead.
+
+Both `render` and `preview-component` accept `--engine local|docker|auto` (default `auto`) — if the local render tools (`tectonic`, `rsvg-convert`, `mmdc`, `java`) are missing, the command automatically relays into Docker. See `docs/extending-druckform.md` §"Execution engines" for details.
 
 ## Directive Components (inline / leaf / container)
 

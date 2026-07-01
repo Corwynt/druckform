@@ -59,8 +59,8 @@ druck render \
 | `druck components` | `--template/-t` | `--json` | resolved components for a template |
 | `druck lint` | `--in` | `--template/-t` (else from frontmatter), `--style`, `--json` | `LintContract` |
 | `druck doctor` | `--template/-t` | `--json` | `LintContract` |
-| `druck render` | `--in`, `--out` | `--template/-t` (else from frontmatter), `--style` (overrides template style), `--assets` (default `.`), `--json` | `RenderContract` + PDF on disk |
-| `druck preview-component` | `--template/-t`, `--name`, `--out` | `--params` (JSON), `--children`, `--style`, `--watch`, `--json` | `RenderContract` + PDF on disk |
+| `druck render` | `--in`, `--out` | `--template/-t` (else from frontmatter), `--style` (overrides template style), `--assets` (default `.`), `--engine local\|docker\|auto` (default `auto`), `--json` | `RenderContract` + PDF on disk |
+| `druck preview-component` | `--template/-t`, `--name`, `--out` | `--params` (JSON), `--children`, `--style`, `--engine local\|docker\|auto` (default `auto`), `--watch`, `--json` | `RenderContract` + PDF on disk |
 | `druck new component` | `--name`, `--template` | `--format ts\|yaml` (default `ts`), `--accepts-children` | emits component boilerplate under the template's `components/` dir |
 | `druck new template` | `--name` | `--extends` | emits `template.yaml` boilerplate in `$DRUCKFORM_TEMPLATES_DIR/<name>/` |
 | `druck mcp` | — | — | starts the MCP server (spawns `druckform-mcp`) |
@@ -102,9 +102,29 @@ Note: `--params` values are interpolated into `key="value"` fence attributes, so
 
 > **Token check happens before LaTeX.** If a component declares `requiredTokens` your style doesn't provide, `render` exits with an error finding and never invokes tectonic. See [§4.4](#44-token-coverage-the-one-gotcha).
 
+### 1.1 Execution engines
+
+`druck render` and `druck preview-component` choose where the render actually runs:
+
+- `--engine local` — spawn `tectonic`/`rsvg-convert`/`mmdc`/`java` directly on this machine.
+- `--engine docker` — relay the same invocation into a Docker container.
+- `--engine auto` (default) — probe for the four local tools; if **all** are found, run locally; if **any** are missing, relay to Docker automatically.
+
+The `DRUCK_ENGINE` environment variable (`local`/`docker`/`auto`) sets the same choice and is used whenever `--engine` is not passed; `--engine` wins if both are set.
+
+The Docker image defaults to `ghcr.io/corwynt/druckform:<cli-version>` (the installed `druckform` package's own version) and can be overridden with `DRUCK_DOCKER_IMAGE`.
+
+In `auto` mode, a boot report — which of `tectonic`/`rsvg-convert`/`mmdc`/`java` were found, their resolved paths, and which engine was picked — is printed to **stderr**. This keeps `--json` output on stdout machine-readable even when the auto-probe runs.
+
+**Identity mounts:** when relaying to Docker, druckform bind-mounts the current working directory, the parent directories of the file inputs `--in`/`--out`/`--style`, and the `--assets` directory (and `DRUCKFORM_TEMPLATES_DIR`, if set) itself at the **same absolute path** inside the container as outside, and runs with the current directory as `-w` (working directory). Relative paths you pass on the command line therefore resolve the same way whether the render happens locally or in the container — no path rewriting needed.
+
+This engine selection applies **only** to `render` and `preview-component`. All other commands (`templates`, `components`, `lint`, `doctor`, `new`, `mcp`) always run locally.
+
 ---
 
 ## 2. The MCP workflow
+
+> The CLI (`druck`) is the primary interface for rendering and authoring; the MCP server below is an optional alternative for host integrations (e.g. Claude Code) that prefer a job/upload/download flow over shelling out to a binary.
 
 The MCP server exposes tools for rendering and for component authoring. Rendering is a job: create → upload a ZIP → (validate) → finalize → download.
 
@@ -1272,6 +1292,8 @@ re-exported from `druckform` — reference it structurally as `{ name: string; o
 | Var | Default | Purpose |
 |-----|---------|---------|
 | `DRUCKFORM_TEMPLATES_DIR` | — | extra dir scanned for **user** templates |
+| `DRUCK_ENGINE` | `auto` | execution engine for `render` and `preview-component`: `local`, `docker`, or `auto` (probes for tools; uses Docker if any are missing) |
+| `DRUCK_DOCKER_IMAGE` | `ghcr.io/corwynt/druckform:<version>` | Docker image override (where `<version>` is the installed druckform package version) |
 | `DRUCKFORM_JOBS_DIR` | `/work/jobs` | MCP job working dirs |
 | `DRUCKFORM_MAX_JOBS` | `10` | MCP max concurrent jobs |
 | `DRUCKFORM_HTTP_PORT` | `0` (OS-assigned ephemeral) | MCP HTTP port. Default `0` gives each instance its own free port (no clashes between concurrent Claude instances). Set a fixed value only when you need determinism (CI, docker port mapping). |
