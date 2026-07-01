@@ -15,10 +15,13 @@ Convert Markdown with composable components into styled PDFs via LaTeX, using th
 | `druck templates` | — | `--json` | list of available templates |
 | `druck components -t <template>` | `--template/-t` | `--json` | resolved components for a template (name, description, params, `acceptsChildren`, `example`, `source`, `acceptsElement`, `form`, `contractVersion`) |
 | `druck lint --in <md>` | `--in` | `--template/-t` (else from frontmatter), `--style`, `--json` | `LintContract` — validates without rendering |
+| `druck doctor -t <template>` | `--template/-t` | `--json` | `LintContract` — validates a template's components (exports, slot/param consistency, token coverage); no document or style needed |
 | `druck render` | `--in`, `--out` | `--template/-t`, `--style`, `--assets` (default `.`), `--engine`, `--json` | `RenderContract` + PDF on disk |
 | `druck preview-component` | `--template/-t`, `--name`, `--out` | `--params` (JSON), `--children`, `--style`, `--watch`, `--engine`, `--json` | `RenderContract` + PDF on disk — fast one-component preview |
 | `druck new component --template <t> --name <n>` | `--name`, `--template` | `--format ts\|yaml`, `--accepts-children` | scaffolds component boilerplate |
 | `druck new template --name <n>` | `--name` | `--extends` | scaffolds a `template.yaml` |
+
+**`lint` vs `doctor`:** `lint` validates a *document* (`--in`) against a template. `doctor` validates a *template's components* (`--template/-t`) with no document or style. Author components against `doctor`; run `lint` before rendering a document.
 
 **Component authoring:** for authoring components or templates, invoke the `druckform-authoring` skill — it encodes the full component/template contract, the scaffold → doctor → preview loop, and the examples gallery.
 

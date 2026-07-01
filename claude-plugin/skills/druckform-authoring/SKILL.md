@@ -20,7 +20,7 @@ scaffold → edit → doctor → preview → iterate
 | Preview | `druck preview-component -t <t> --name <n> --out /tmp/p.pdf` |
 | Inspect | `druck components -t <t> --json` — returns `source`, `acceptsElement`, `form`, `contractVersion` in addition to the consume fields |
 
-`druck doctor` validates the full template (all components, extends chain) without a document or style file — run it before every preview. `preview-component` uses `meta.example` when `--params`/`--children` are omitted.
+`druck doctor` validates the full template (all components, extends chain) without a document or style file (Distinct from `druck lint`, which validates a *document* against a template; see the `druckform` skill.) — run it before every preview. `preview-component` uses `meta.example` when `--params`/`--children` are omitted.
 
 Add `--watch` to `preview-component` to re-render on every save while editing.
 
@@ -29,6 +29,19 @@ Add `--watch` to `preview-component` to re-render on every save while editing.
 (from `meta.form`), so the preview exercises the real render path. The `document`
 shell and `block:*` overrides are renderer-internal and cannot be previewed in
 isolation — iterate on them with a full `render` against a small test document instead.
+
+To iterate on a `block:table` override, render a one-table document:
+
+```bash
+cat > /tmp/t.md <<'EOF'
+| Name | Role |
+| --- | --- |
+| Ada | Author |
+EOF
+druck render -t <template> --in /tmp/t.md --out /tmp/t.pdf
+```
+
+For a `document` shell, give the test doc frontmatter (`title:` etc.) so the title block is exercised. `render` has no `--watch`, so re-run it after each edit. (Full `render` flags: see the `druckform` skill.)
 
 Both `render` and `preview-component` accept `--engine local|docker|auto` (default `auto`) — if the local render tools (`tectonic`, `rsvg-convert`, `mmdc`, `java`) are missing, the command automatically relays into Docker. See `docs/extending-druckform.md` §"Execution engines" for details.
 
@@ -84,6 +97,8 @@ ${raw(children)}
 };
 ```
 
+**Valid `meta` keys:** `name` (required, must equal the filename stem), `description` (required), `acceptsChildren` (bool), `form?` (`"inline" | "leaf" | "container"`, default `"container"`), `example?`, `requiredTokens?` (legacy, prefer `tokenRef`; the two are unioned).
+
 **Escaping rules — read before splicing LaTeX:**
 
 | Expression | When to use |
@@ -91,6 +106,8 @@ ${raw(children)}
 | `escapeTeX(s)` | raw user string (any `params.*` not going through `Tex`) |
 | `` Tex`…${x}…` `` | tagged template — auto-escapes interpolations |
 | `raw(x)` | wrap trusted content inside `Tex`: `children`, `ctx.token("name")`, prebuilt LaTeX |
+
+**Preamble dedup is by trimmed exact string.** Identical preambles collapse to one; any difference, even whitespace beyond the trim, emits both and can double a `\newenvironment` into a LaTeX failure. Keep shared preamble byte-identical across components, or hoist it to a parent template.
 
 Never put a `params.*` string into LaTeX without `escapeTeX` or `Tex` (without `raw`).
 
@@ -100,6 +117,12 @@ color **named** `druckAccent` (bare name, no backslash — use in color-key args
 **macro** `\druckAccent` (use in running text). `ctx.token("accent")` returns the
 **macro** — splicing it into a `colframe=`/`\rowcolor{}` argument breaks; those need
 the bare name (`druck<Name>`, capitalize-first) instead.
+
+### TS execution & module resolution
+
+`.ts` components are bundled with esbuild and imported at load time, no separate build step. `z` and `tokenRef` are both re-exported from `@druckform/core`, so schema and helpers come from one import (`import { z } from "zod"` also works).
+
+**Gotcha for user templates:** a `.ts` component under an external `$DRUCKFORM_TEMPLATES_DIR` only loads if `zod` and `@druckform/core` are resolvable from that directory's module path. A standalone template dir with no local `node_modules` silently fails to load TS components. Options, in order of preference: use declarative YAML components in standalone external dirs (no dependency), keep TS components inside the repo where the packages are installed, or install the packages beside the templates dir. YAML components have none of this constraint.
 
 ## Declarative Component Contract (`*.component.yaml`)
 
@@ -124,6 +147,8 @@ example: |
 ```
 
 Interpolation: `string` params → `escapeTeX`-escaped; `token` params → `ctx.token(...)` macro (raw); `{{children}}` → pre-rendered child LaTeX (raw).
+
+**Param `type` values:** only `string` and `token`. There is no `number`, `boolean`, or `enum`, use a TS component when you need enums, computed values, or logic.
 
 ## Template-Bundled Assets (`ctx.asset`, `ctx.templateDir`)
 
