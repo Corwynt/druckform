@@ -287,6 +287,66 @@ Alice -> Bob: Hello
 
 PlantUML skins: put a `.puml` file in `assets/` and reference it from `style.yaml` via `diagrams.plantuml.skinRef`.
 
+**Mermaid labels are plain text.** druckform sets `htmlLabels:false`, because the
+SVG→PDF step (`rsvg-convert`/librsvg) cannot render the HTML that Mermaid emits in
+`<foreignObject>` by default — every label would silently disappear otherwise.
+Mermaid labels are rendered as SVG `<text>` instead. **Consequence:** rich HTML
+inside labels (bold, links, `<br>`) is not supported — use plain-text labels.
+
+**Brand colours** via `diagrams.mermaid.themeVariables` in `style.yaml`, either
+inline:
+
+```yaml
+diagrams:
+  mermaid:
+    themeVariables: { primaryColor: "#FFE7D1", primaryBorderColor: "#FF6b00",
+                       lineColor: "#FF6b00", primaryTextColor: "#1A1A1A" }
+```
+
+or via a JSON file referenced by `diagrams.mermaid.themeVariablesRef` (resolved
+relative to the style file):
+
+```yaml
+diagrams:
+  mermaid:
+    themeVariablesRef: "mermaid-theme.json"
+```
+
+Whenever `themeVariables` are present (inline or via `themeVariablesRef`),
+druckform forces Mermaid's `base` theme — it's the only theme that honours all
+variables. `theme` alone (with no `themeVariables`) selects a named Mermaid theme
+(`default`/`forest`/`dark`/`neutral`).
+
+**Height cap:** diagrams are capped at `0.82\textheight` by default so a tall graph
+never overflows the page (aspect ratio is preserved; only oversized diagrams
+shrink). A document shell can retune the cap for the whole document:
+
+```latex
+\renewcommand{\druckDiagramMaxHeight}{0.7\textheight}
+```
+
+Or override a single diagram from Markdown by adding `maxheight=<n>` (a fraction
+of `\textheight`) to the fence info-string:
+
+````markdown
+```mermaid maxheight=0.5
+graph TD
+  A[Start] --> B[End]
+```
+````
+
+Images (`![alt](src)`) get the same treatment via `\druckImageMaxHeight`
+(default `0.82\textheight`) and a `maxheight=<n>` directive placed in the image
+title instead of the fence info-string:
+
+```markdown
+![alt](figure.pdf "maxheight=0.5")
+```
+
+```latex
+\renewcommand{\druckImageMaxHeight}{0.5\textheight}
+```
+
 ### 3.4 Frontmatter
 
 A document may begin with a `---` YAML frontmatter block (it must be the very first line, with a closing `---`):
@@ -1020,7 +1080,9 @@ GFM block-level Markdown is rendered by built-in components in the **`base`** te
 `block:image` resolves each Markdown image `src` against the document's **assets
 root** — the `--assets <dir>` CLI flag (default `"."`; see the [CLI reference](#cli-reference))
 or the ZIP bundle's `assets/` dir over MCP — to an absolute path via `resolveAssetPath`
-before emitting `\includegraphics`.
+before emitting `\includegraphics`. It also caps the image height at
+`\druckImageMaxHeight` (default `0.82\textheight`, overridable per-document or
+per-image via `maxheight=<n>` in the image title — see [§3.3](#33-diagrams)).
 
 ### 7.1 The `element` payload
 

@@ -144,6 +144,20 @@ Guard on `kind` and fall back gracefully for `:::` components (element is undefi
 - Must NOT emit `\documentclass` or the engine-core packages (`fontspec`, `xcolor`, `graphicx`, `hyperref`, `ulem`) — the composer injects them before your shell.
 - Emit `el.stylePreamble` and `el.componentPreamble` from the payload.
 - A shell missing the body marker is rejected at compose time.
+- The composer also injects `\druckDiagramMaxHeight` / `\druckImageMaxHeight`
+  (both default `0.82\textheight`) — `\renewcommand` either to retune the default
+  cap for diagrams/images; a single graphic can override its own cap from
+  Markdown with `maxheight=<n>` (fence info-string for diagrams, image title for
+  `block:image`). See `docs/extending-druckform.md` §3.3.
+
+## Mermaid Diagrams
+
+- Labels render as SVG `<text>` (druckform sets `htmlLabels:false`) — librsvg can't
+  render the `<foreignObject>` HTML Mermaid emits by default. **Rich HTML in
+  labels (bold, links, `<br>`) is not supported**; use plain text.
+- Brand colours: `diagrams.mermaid.themeVariables` (inline) or
+  `diagrams.mermaid.themeVariablesRef` (JSON file beside the style). Either one
+  forces Mermaid's `base` theme; `theme` alone picks a named theme.
 
 ## Auto-Discovery & Registration
 
