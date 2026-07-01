@@ -41,11 +41,11 @@ export function stripEngineFlag(args: string[]): string[] {
 
 export interface MountSpec {
   cwd: string;
-  in?: string;
-  out?: string;
-  assets?: string;
-  style?: string;
-  templatesDir?: string;
+  in?: string | undefined;
+  out?: string | undefined;
+  assets?: string | undefined;
+  style?: string | undefined;
+  templatesDir?: string | undefined;
 }
 
 /** Absolute, deduped directories to bind-mount identically into the container. */

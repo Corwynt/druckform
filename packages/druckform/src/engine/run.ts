@@ -4,9 +4,14 @@ import { type ToolStatus, formatReport, probeTools } from "./probe-tools.js";
 import { decideEngine, resolveEngineMode } from "./resolve-engine.js";
 
 export interface RunEngineOpts {
-  engineFlag?: string;
+  engineFlag?: string | undefined;
   rawArgs: string[];
-  paths: { in?: string; out?: string; assets?: string; style?: string };
+  paths: {
+    in?: string | undefined;
+    out?: string | undefined;
+    assets?: string | undefined;
+    style?: string | undefined;
+  };
   local: () => Promise<void>;
   deps?: {
     probe?: () => ToolStatus[];
