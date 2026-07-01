@@ -14,7 +14,18 @@ import type { StyleConfig } from "../../src/sdk/types.js";
 let workDir: string;
 beforeEach(() => {
   workDir = fs.mkdtempSync(path.join(os.tmpdir(), "df-mmd-"));
-  vi.mocked(spawnSync).mockClear();
+  vi.mocked(spawnSync).mockReset();
+  // Stub the toolchain: `mmdc` "produces" the SVG at its `-o` target so the
+  // renderer's whitespace post-processing (readFileSync of the SVG) has a file
+  // to work on; `rsvg-convert` just succeeds.
+  vi.mocked(spawnSync).mockImplementation((cmd, args) => {
+    if (cmd === "mmdc") {
+      const a = args as string[];
+      const out = a[a.indexOf("-o") + 1];
+      if (out) fs.writeFileSync(out, "<svg><text >Neuer Artikel</text></svg>", "utf8");
+    }
+    return { status: 0, stdout: "", stderr: "" } as never;
+  });
 });
 afterEach(() => fs.rmSync(workDir, { recursive: true, force: true }));
 
@@ -92,5 +103,12 @@ describe("renderMermaid config", () => {
     renderMermaid("graph TD; A-->B", style, workDir, 0);
     expect(mmdcArgs()).toEqual(expect.arrayContaining(["-t", "forest"]));
     expect(readConfig().theme).toBeUndefined();
+  });
+
+  it("post-processes the SVG to force xml:space=preserve on <text> (whitespace fix)", () => {
+    renderMermaid("graph TD; A-->B", baseStyle, workDir, 0);
+    const svg = fs.readFileSync(path.join(workDir, "mermaid-0.svg"), "utf8");
+    expect(svg).toContain('<text xml:space="preserve" ');
+    expect(svg).not.toContain("<text >");
   });
 });
