@@ -141,6 +141,8 @@ export interface ComponentMeta {
   name: string;
   description: string;
   acceptsChildren: boolean;
+  /** Directive form. Defaults to "container". */
+  form?: "inline" | "leaf" | "container";
   example?: string;
   /** Token names this component reads from ctx.token() — for static validation */
   requiredTokens?: string[];

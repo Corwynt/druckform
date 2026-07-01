@@ -100,7 +100,7 @@ export async function loadTypeScriptComponent(tsPath: string): Promise<Component
     const requiredTokens = new Set([...(mod.meta.requiredTokens ?? []), ...derivedTokens]);
 
     return {
-      meta: mod.meta,
+      meta: { ...mod.meta, form: mod.meta.form ?? "container" },
       schema: mod.schema,
       jsonSchema: jsonSchema as Record<string, unknown>,
       render: (params, children, ctx, element) => {

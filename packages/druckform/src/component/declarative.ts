@@ -20,6 +20,7 @@ interface DeclarativeComponentYaml {
   preamble?: string;
   requiredTokens?: string[];
   example?: string;
+  form?: "inline" | "leaf" | "container";
 }
 
 export function loadDeclarativeComponent(yamlPath: string): ComponentDef {
@@ -110,6 +111,7 @@ export function loadDeclarativeComponent(yamlPath: string): ComponentDef {
       name: spec.name,
       description: spec.description,
       acceptsChildren,
+      form: spec.form ?? "container",
       ...(spec.example !== undefined ? { example: spec.example } : {}),
       requiredTokens: [...requiredTokens],
     },
