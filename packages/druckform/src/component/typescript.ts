@@ -1,4 +1,7 @@
+import fsSync from "node:fs";
+import { createRequire } from "node:module";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import esbuild from "esbuild";
 import type { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
@@ -10,6 +13,21 @@ import type { ComponentDef, ComponentMeta } from "../sdk/types.js";
 // Promise.all), where Date.now() alone collides within a single millisecond.
 let tmpCounter = 0;
 
+// Absolute entry paths for the two deps every component may import. They are
+// resolved against THIS package so a component in an external
+// DRUCKFORM_TEMPLATES_DIR (which cannot resolve upward to our node_modules)
+// still bundles them. Everything else stays external (see the plugin below).
+const require_ = createRequire(import.meta.url);
+const ZOD_ENTRY = require_.resolve("zod");
+const _loaderDir = path.dirname(fileURLToPath(import.meta.url));
+// src layout: <pkg>/src/component → ../index.ts ; bundled dist: <pkg>/dist → ./index.js
+const DRUCKFORM_ENTRY =
+  [
+    path.resolve(_loaderDir, "../index.ts"),
+    path.resolve(_loaderDir, "../index.js"),
+    path.resolve(_loaderDir, "index.js"),
+  ].find((p) => fsSync.existsSync(p)) ?? path.resolve(_loaderDir, "../index.js");
+
 export async function loadTypeScriptComponent(tsPath: string): Promise<ComponentDef> {
   // Bundle the TS component to a temp ESM file in memory
   const result = await esbuild.build({
@@ -18,8 +36,29 @@ export async function loadTypeScriptComponent(tsPath: string): Promise<Component
     format: "esm",
     platform: "node",
     write: false,
-    packages: "external", // don't bundle node_modules
     target: "node22",
+    // Inline zod + druckform (resolved from THIS package); leave all other
+    // bare imports external so we don't bundle unrelated node_modules.
+    alias: { zod: ZOD_ENTRY, druckform: DRUCKFORM_ENTRY },
+    plugins: [
+      {
+        name: "externalize-non-blessed",
+        setup(build) {
+          build.onResolve({ filter: /^[^./]/ }, (args) => {
+            if (args.kind === "entry-point") return undefined;
+            if (
+              args.path === "zod" ||
+              args.path.startsWith("zod/") ||
+              args.path === "druckform" ||
+              args.path.startsWith("druckform/")
+            ) {
+              return undefined; // let alias + normal resolution bundle these
+            }
+            return { path: args.path, external: true };
+          });
+        },
+      },
+    ],
   });
 
   const code = result.outputFiles[0]?.text;
