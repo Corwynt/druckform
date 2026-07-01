@@ -41,7 +41,8 @@ export function renderMermaid(
   // <foreignObject> that Mermaid emits by default, so it would drop every label).
   const config: Record<string, unknown> = { htmlLabels: false, flowchart: { htmlLabels: false } };
   const args = ["-i", inputFile, "-o", svgFile];
-  if (themeVariables) {
+  const hasVars = !!themeVariables && Object.keys(themeVariables).length > 0;
+  if (hasVars) {
     // themeVariables are only honoured under the "base" theme, and `-t base` is
     // rejected by the mmdc CLI — so set the theme in the config and drop -t.
     config.theme = "base";

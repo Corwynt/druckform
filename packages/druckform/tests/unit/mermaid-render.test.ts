@@ -82,4 +82,15 @@ describe("renderMermaid config", () => {
     expect((cfg.themeVariables as Record<string, string>).lineColor).toBe("#123456");
     fs.rmSync(styleDir, { recursive: true, force: true });
   });
+
+  it("treats empty themeVariables like no themeVariables — passes -t <theme> and omits config.theme", () => {
+    const style: StyleConfig = {
+      $schema: "style-v1",
+      tokens: {},
+      diagrams: { mermaid: { theme: "forest", themeVariables: {} } },
+    };
+    renderMermaid("graph TD; A-->B", style, workDir, 0);
+    expect(mmdcArgs()).toEqual(expect.arrayContaining(["-t", "forest"]));
+    expect(readConfig().theme).toBeUndefined();
+  });
 });

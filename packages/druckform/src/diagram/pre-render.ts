@@ -3,8 +3,8 @@ import { parseMaxHeightFraction } from "./fence-info.js";
 import { renderMermaid } from "./mermaid.js";
 import { renderPlantUML } from "./plantuml.js";
 
-const MERMAID_FENCE = /^```mermaid([^\n]*)\n([\s\S]*?)```$/m;
-const PLANTUML_FENCE = /^```plantuml([^\n]*)\n([\s\S]*?)```$/m;
+const MERMAID_FENCE = /^```mermaid( [^\n]*)?\n([\s\S]*?)```$/m;
+const PLANTUML_FENCE = /^```plantuml( [^\n]*)?\n([\s\S]*?)```$/m;
 
 /**
  * Finds fenced diagram blocks in text nodes, renders them to PDF files,
