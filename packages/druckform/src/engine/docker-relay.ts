@@ -13,7 +13,7 @@ export function resolveVersion(): string {
   for (const c of candidates) {
     try {
       const pkg = JSON.parse(fs.readFileSync(c, "utf8")) as { name?: string; version?: string };
-      if (pkg.name === "druckform" && pkg.version) return pkg.version;
+      if (pkg.name === "@druckform/core" && pkg.version) return pkg.version;
     } catch {
       // try next candidate
     }
@@ -22,7 +22,7 @@ export function resolveVersion(): string {
 }
 
 export function defaultImage(): string {
-  return `ghcr.io/corwynt/druckform:${resolveVersion()}`;
+  return `ghcr.io/druckform/druckform:${resolveVersion()}`;
 }
 
 export function stripEngineFlag(args: string[]): string[] {

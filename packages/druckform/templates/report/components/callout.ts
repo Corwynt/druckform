@@ -1,5 +1,5 @@
-import { Tex, raw } from "druckform";
-import type { Component, RenderCtx } from "druckform";
+import { Tex, raw } from "@druckform/core";
+import type { Component, RenderCtx } from "@druckform/core";
 import { z } from "zod";
 
 export const schema = z.object({

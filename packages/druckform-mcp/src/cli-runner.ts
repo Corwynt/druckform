@@ -4,7 +4,7 @@ import type {
   LintContract,
   RenderContract,
   TemplatesContract,
-} from "druckform";
+} from "@druckform/core";
 
 function run(args: string[]): { ok: boolean; stdout: string; stderr: string } {
   // Read env var at call time so tests can set it in beforeAll

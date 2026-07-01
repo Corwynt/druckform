@@ -13,7 +13,7 @@ afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
 describe("external-template TS component loading", () => {
   it("resolves zod and druckform from an external dir with no local node_modules", async () => {
     const src = [
-      'import { z, escapeTeX } from "druckform";',
+      'import { z, escapeTeX } from "@druckform/core";',
       "export const schema = z.object({ label: z.string() });",
       'export const meta = { name: "ext", description: "external", acceptsChildren: false };',
       "export function render(params) {",

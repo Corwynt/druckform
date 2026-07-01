@@ -1,5 +1,5 @@
 ---
-"druckform": minor
+"@druckform/core": minor
 ---
 
 Scaffold and auto-discover components. Drop a file in a template's `components/`

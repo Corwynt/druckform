@@ -1,6 +1,6 @@
 ---
-"druckform": minor
-"druckform-mcp": minor
+"@druckform/core": minor
+"@druckform/mcp": minor
 ---
 
 Add a fast single-component preview loop: `druck preview-component` (with `--watch`)

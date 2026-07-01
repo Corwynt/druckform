@@ -112,7 +112,7 @@ Note: `--params` values are interpolated into `key="value"` fence attributes, so
 
 The `DRUCK_ENGINE` environment variable (`local`/`docker`/`auto`) sets the same choice and is used whenever `--engine` is not passed; `--engine` wins if both are set.
 
-The Docker image defaults to `ghcr.io/corwynt/druckform:<cli-version>` (the installed `druckform` package's own version) and can be overridden with `DRUCK_DOCKER_IMAGE`.
+The Docker image defaults to `ghcr.io/druckform/druckform:<cli-version>` (the installed `@druckform/core` package's own version) and can be overridden with `DRUCK_DOCKER_IMAGE`.
 
 In `auto` mode, a boot report — which of `tectonic`/`rsvg-convert`/`mmdc`/`java` were found, their resolved paths, and which engine was picked — is printed to **stderr**. This keeps `--json` output on stdout machine-readable even when the auto-probe runs.
 
@@ -477,7 +477,7 @@ The document shell receives frontmatter twice: on the `DocumentLayout` payload
 fine to read). A typical title block:
 
 ```ts
-import { escapeTeX, type BlockElement, type DocumentLayout, type RenderCtx } from "druckform";
+import { escapeTeX, type BlockElement, type DocumentLayout, type RenderCtx } from "@druckform/core";
 
 export function render(_p: unknown, _c: string, ctx: RenderCtx, el?: BlockElement | DocumentLayout) {
   if (!el || el.kind !== "document") return "DRUCKFORM_BODY";
@@ -724,7 +724,7 @@ druck new component --template acme --name banner --format yaml
 
 The generated file appears at `<templateDir>/components/banner.ts` (or `.component.yaml`). For TS components the filename stem must match `meta.name` for auto-discovery to pick it up (doctor flags a mismatch). Explicit `template.yaml` entries still override auto-discovered ones for `defaults`/partial overrides/tombstones.
 
-> **Note for external template directories:** a TS-format component placed in an external `DRUCKFORM_TEMPLATES_DIR` only loads if `zod` and `druckform` are resolvable from that directory's module path. Standalone external template directories should prefer YAML components (or keep TS components inside the repo where the packages are already installed).
+> **Note for external template directories:** a TS-format component placed in an external `DRUCKFORM_TEMPLATES_DIR` only loads if `zod` and `@druckform/core` are resolvable from that directory's module path. Standalone external template directories should prefer YAML components (or keep TS components inside the repo where the packages are already installed).
 
 A component file lives under a template's directory and is either auto-discovered (see [§6.3](#63-the-extends-chain)) or registered in that template's `template.yaml` `components:` map.
 
@@ -779,8 +779,8 @@ A `.ts` component **must export** `schema`, `meta`, `render` (and optionally `pr
 Real example (`templates/report/components/callout.ts`):
 
 ```ts
-import { Tex, raw } from "druckform";
-import type { Component, RenderCtx } from "druckform";
+import { Tex, raw } from "@druckform/core";
+import type { Component, RenderCtx } from "@druckform/core";
 import { z } from "zod";
 
 export const schema = z.object({
@@ -843,7 +843,7 @@ actually read via `ctx.token()`), declare token params in the schema with `token
 The loader **derives** `requiredTokens` from them, so there is a single source of truth:
 
 ```ts
-import { z, tokenRef } from "druckform";   // tokenRef is exported from the package
+import { z, tokenRef } from "@druckform/core";   // tokenRef is exported from the package
 
 export const schema = z.object({
   accent: tokenRef("accent"),   // validates as a string; marks "accent" as required
@@ -852,7 +852,7 @@ export const schema = z.object({
 // no meta.requiredTokens needed — "accent" is derived from the schema and coverage-checked
 ```
 
-`z` is re-exported from `"druckform"` (the same zod instance the package uses
+`z` is re-exported from `"@druckform/core"` (the same zod instance the package uses
 internally), so `tokenRef` and `z` can come from one import. `import { z } from "zod";`
 also works — both point at the same package as long as `zod` is resolvable
 (see the external-template-directory note above).
@@ -881,10 +881,10 @@ await renderComponent("templates/base/components/infobox.component.yaml", { titl
 
 ### 5.3 Escaping & safety (read this before writing LaTeX)
 
-`children` arrives **already processed**. Everything else you splice in is your responsibility. Import helpers from `druckform`:
+`children` arrives **already processed**. Everything else you splice in is your responsibility. Import helpers from `@druckform/core`:
 
 ```ts
-import { escapeTeX, Tex, raw, RawTeX, resolveAssetPath } from "druckform";
+import { escapeTeX, Tex, raw, RawTeX, resolveAssetPath } from "@druckform/core";
 ```
 
 | Helper | Use for |
@@ -1003,7 +1003,7 @@ Within any template directory, druckform scans the `components/` subdirectory an
 
 Explicit `template.yaml` component entries always take precedence over auto-discovered files, so you can still override `defaults:`, use partial `extends:`, or tombstone (`null`) an auto-discovered component from a parent template.
 
-> **Note for external template directories:** TS-format components in an external `DRUCKFORM_TEMPLATES_DIR` only load if `zod` and `druckform` are resolvable from that directory's module path. Prefer YAML components in standalone external template directories (or keep TS components inside the repo where the packages are already installed).
+> **Note for external template directories:** TS-format components in an external `DRUCKFORM_TEMPLATES_DIR` only load if `zod` and `@druckform/core` are resolvable from that directory's module path. Prefer YAML components in standalone external template directories (or keep TS components inside the repo where the packages are already installed).
 
 ### 6.3 The `extends` chain
 
@@ -1067,7 +1067,7 @@ components:
 ```ts
 // components/block-table.ts  — replaces the default GFM table renderer
 import { z } from "zod";
-import type { BlockElement, RenderCtx } from "druckform";
+import type { BlockElement, RenderCtx } from "@druckform/core";
 
 export const schema = z.object({});
 export const meta = { name: "block:table", description: "fancy table", acceptsChildren: false };
@@ -1089,7 +1089,7 @@ A `document` override receives a typed `DocumentLayout` payload (the 4th render 
 ```ts
 // components/document.ts  (registered as `document` in your template.yaml)
 import { z } from "zod";
-import type { BlockElement, DocumentLayout, RenderCtx } from "druckform";
+import type { BlockElement, DocumentLayout, RenderCtx } from "@druckform/core";
 
 export const schema = z.object({});
 export const meta = { name: "document", description: "A4 + headers", acceptsChildren: true };
@@ -1267,21 +1267,21 @@ interface LintContract       { schemaVersion: "1"; ok: boolean; findings: Findin
 interface RenderContract     { schemaVersion: "1"; status: "ok"|"error"; pdf: string|null; error?: { summary; findings: Finding[] }; }
 ```
 
-SDK surface importable from `druckform` (for TS components):
+SDK surface importable from `@druckform/core` (for TS components):
 
 ```ts
 // values
-import { escapeTeX, Tex, raw, RawTeX, resolveAssetPath, z, tokenRef } from "druckform";
+import { escapeTeX, Tex, raw, RawTeX, resolveAssetPath, z, tokenRef } from "@druckform/core";
 // types
 import type {
   Component, ComponentDef, ComponentMeta, RenderCtx, BlockElement, DocumentLayout,
   StyleConfig, StyleTokens, Finding,
   ResolvedTemplate, LintContract, RenderContract, TemplatesContract, ComponentsContract,
-} from "druckform";
+} from "@druckform/core";
 ```
 
 (`FontSpec` is a type used inside `StyleTokens`/`StyleConfig` but is not itself
-re-exported from `druckform` — reference it structurally as `{ name: string; options?: string }` or via `NonNullable<StyleTokens["fonts"]["main"]>` (the bare `StyleTokens["fonts"]["main"]` includes `| undefined`).)
+re-exported from `@druckform/core` — reference it structurally as `{ name: string; options?: string }` or via `NonNullable<StyleTokens["fonts"]["main"]>` (the bare `StyleTokens["fonts"]["main"]` includes `| undefined`).)
 
 ---
 
@@ -1293,7 +1293,7 @@ re-exported from `druckform` — reference it structurally as `{ name: string; o
 |-----|---------|---------|
 | `DRUCKFORM_TEMPLATES_DIR` | — | extra dir scanned for **user** templates |
 | `DRUCK_ENGINE` | `auto` | execution engine for `render` and `preview-component`: `local`, `docker`, or `auto` (probes for tools; uses Docker if any are missing) |
-| `DRUCK_DOCKER_IMAGE` | `ghcr.io/corwynt/druckform:<version>` | Docker image override (where `<version>` is the installed druckform package version) |
+| `DRUCK_DOCKER_IMAGE` | `ghcr.io/druckform/druckform:<version>` | Docker image override (where `<version>` is the installed @druckform/core package version) |
 | `DRUCKFORM_JOBS_DIR` | `/work/jobs` | MCP job working dirs |
 | `DRUCKFORM_MAX_JOBS` | `10` | MCP max concurrent jobs |
 | `DRUCKFORM_HTTP_PORT` | `0` (OS-assigned ephemeral) | MCP HTTP port. Default `0` gives each instance its own free port (no clashes between concurrent Claude instances). Set a fixed value only when you need determinism (CI, docker port mapping). |

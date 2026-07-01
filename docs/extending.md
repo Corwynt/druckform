@@ -141,7 +141,7 @@ To add templates without rebuilding the image:
 ```bash
 docker run --rm \
   -v "$(pwd)/my-templates:/work/templates" \
-  ghcr.io/corwynt/druckform:latest \
+  ghcr.io/druckform/druckform:latest \
   templates --json
 ```
 

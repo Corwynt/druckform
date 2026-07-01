@@ -1,5 +1,5 @@
 ---
-"druckform": minor
+"@druckform/core": minor
 ---
 
 Render full GitHub Flavored Markdown: tables, ordered/nested lists, task lists,

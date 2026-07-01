@@ -1,6 +1,6 @@
 ---
-"druckform": minor
-"druckform-mcp": minor
+"@druckform/core": minor
+"@druckform/mcp": minor
 ---
 
 Authoring agent surface: `list_components` now returns each component's source,

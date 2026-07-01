@@ -1,21 +1,5 @@
 {
   "name": "druckform",
   "version": "0.1.0",
-  "description": "Render AI-authored Markdown into styled PDFs via LaTeX. Provides the druckform MCP server and a reference skill.",
-  "mcpServers": {
-    "druckform": {
-      "command": "docker",
-      "args": [
-        "run",
-        "--rm",
-        "-i",
-        "-p",
-        "7331:7331",
-        "-e",
-        "DRUCKFORM_HTTP_BIND=0.0.0.0",
-        "ghcr.io/corwynt/druckform:latest",
-        "mcp"
-      ]
-    }
-  }
+  "description": "Render AI-authored Markdown into styled PDFs via LaTeX. Provides the druckform cli and a reference skill."
 }

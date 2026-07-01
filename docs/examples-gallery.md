@@ -11,8 +11,8 @@ To use these components as a starting point, copy the relevant file into your ow
 Demonstrates: accepting named params, rendering children, and declaring required style tokens via `meta.requiredTokens`.
 
 ```ts
-import type { Component, RenderCtx } from "druckform";
-import { Tex, raw } from "druckform";
+import type { Component, RenderCtx } from "@druckform/core";
+import { Tex, raw } from "@druckform/core";
 import { z } from "zod";
 
 export const schema = z.object({
@@ -48,7 +48,7 @@ ${raw(children)}
 Demonstrates: overriding the `document` component to control geometry, preamble placement, and the title block. The shell **must** emit `DRUCKFORM_BODY` — the engine replaces this placeholder with the rendered body. It must **not** emit `\documentclass` (the engine injects that).
 
 ```ts
-import type { BlockElement, DocumentLayout, RenderCtx } from "druckform";
+import type { BlockElement, DocumentLayout, RenderCtx } from "@druckform/core";
 import { z } from "zod";
 
 export const schema = z.object({});
@@ -83,7 +83,7 @@ export function render(
 Demonstrates: overriding a reserved `block:` component that receives a structured `BlockElement` payload instead of children. The component reads `element.alignments`, `element.header`, and `element.rows` to produce a `tabularx` table with booktabs rules.
 
 ```ts
-import type { BlockElement, RenderCtx } from "druckform";
+import type { BlockElement, RenderCtx } from "@druckform/core";
 import { z } from "zod";
 
 export const schema = z.object({});

@@ -24,8 +24,8 @@ describe("stripEngineFlag", () => {
 });
 
 describe("defaultImage", () => {
-  it("targets ghcr.io/corwynt/druckform at the package version", () => {
-    expect(defaultImage()).toMatch(/^ghcr\.io\/corwynt\/druckform:\d+\.\d+\.\d+/);
+  it("targets ghcr.io/druckform/druckform at the package version", () => {
+    expect(defaultImage()).toMatch(/^ghcr\.io\/druckform\/druckform:\d+\.\d+\.\d+/);
   });
 });
 
@@ -56,14 +56,14 @@ describe("buildDockerArgs", () => {
       cwd: "/work/proj",
       mountDirs: ["/work/proj", "/etc/styles"],
       templatesDir: "/opt/tpl",
-      image: "ghcr.io/corwynt/druckform:0.1.0",
+      image: "ghcr.io/druckform/druckform:0.1.0",
     });
     expect(args.slice(0, 4)).toEqual(["run", "--rm", "-w", "/work/proj"]);
     expect(args).toContain("-v");
     expect(args.join(" ")).toContain("/work/proj:/work/proj");
     expect(args.join(" ")).toContain("/etc/styles:/etc/styles");
     expect(args.join(" ")).toContain("-e DRUCKFORM_TEMPLATES_DIR=/opt/tpl");
-    const imgIdx = args.indexOf("ghcr.io/corwynt/druckform:0.1.0");
+    const imgIdx = args.indexOf("ghcr.io/druckform/druckform:0.1.0");
     expect(imgIdx).toBeGreaterThan(0);
     expect(args.slice(imgIdx + 1)).toEqual(["render", "--in", "doc.md", "--out", "o.pdf"]);
   });

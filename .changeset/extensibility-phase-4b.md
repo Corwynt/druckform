@@ -1,5 +1,5 @@
 ---
-"druckform-mcp": minor
+"@druckform/mcp": minor
 ---
 
 Phase 4 (Part B) — persistent jobs & delta uploads for an edit loop:

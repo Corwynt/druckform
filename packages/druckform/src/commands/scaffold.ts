@@ -27,7 +27,7 @@ export function newTemplate(opts: { name: string; extends?: string }): {
 function tsTemplate(name: string, acceptsChildren: boolean): string {
   const childrenLine = acceptsChildren ? "body\\n" : "";
   const renderBody = acceptsChildren ? "children" : '""';
-  return `import type { BlockElement, RenderCtx } from "druckform";
+  return `import type { BlockElement, RenderCtx } from "@druckform/core";
 import { z } from "zod";
 
 export const schema = z.object({});
