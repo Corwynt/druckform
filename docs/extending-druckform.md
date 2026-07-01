@@ -334,14 +334,15 @@ The document shell receives frontmatter twice: on the `DocumentLayout` payload
 fine to read). A typical title block:
 
 ```ts
-import { escapeTeX, type DocumentLayout, type RenderCtx } from "druckform";
+import { escapeTeX, type BlockElement, type DocumentLayout, type RenderCtx } from "druckform";
 
-export function render(_p: unknown, _c: string, ctx: RenderCtx, el?: DocumentLayout) {
-  const fm = (el as DocumentLayout).frontmatter; // === ctx.frontmatter
+export function render(_p: unknown, _c: string, ctx: RenderCtx, el?: BlockElement | DocumentLayout) {
+  if (!el || el.kind !== "document") return "DRUCKFORM_BODY";
+  const fm = el.frontmatter; // === ctx.frontmatter
   const title = escapeTeX(fm.title ?? "");
   const subtitle = escapeTeX(fm.subtitle ?? "");
   return [
-    (el as DocumentLayout).stylePreamble,
+    el.stylePreamble,
     "\\begin{document}",
     `{\\Huge\\bfseries ${title}\\par}`,
     subtitle ? `{\\Large ${subtitle}\\par}` : "",
@@ -1014,12 +1015,12 @@ GFM block-level Markdown is rendered by built-in components in the **`base`** te
 | `block:blockquote` | `>` → `quote` | — |
 | `block:codeblock` | fenced code → `lstlisting` | `listings` |
 | `block:image` | `![alt](src)` → `\includegraphics` | `adjustbox` |
+| `block:hr` | `---` → `\rule` | — |
 
 `block:image` resolves each Markdown image `src` against the document's **assets
 root** — the `--assets <dir>` CLI flag (default `"."`; see the [CLI reference](#cli-reference))
 or the ZIP bundle's `assets/` dir over MCP — to an absolute path via `resolveAssetPath`
 before emitting `\includegraphics`.
-| `block:hr` | `---` → `\rule` | — |
 
 ### 7.1 The `element` payload
 

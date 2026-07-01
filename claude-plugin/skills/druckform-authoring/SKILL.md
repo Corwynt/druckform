@@ -121,6 +121,8 @@ return raw(`\\includegraphics[height=8mm]{${ctx.asset("logo.svg")}}`);
 Only populated for:
 - **`block:*` components** — receives a typed `BlockElement` (`kind: "heading" | "table" | "list" | "codeblock" | "blockquote" | "image" | "hr"`).
 - **`document` shell** — receives `DocumentLayout` (`kind: "document"`, `documentclass`, `stylePreamble`, `componentPreamble`, `frontmatter`). The body marker is **not** a payload field — a TS shell emits the literal string `DRUCKFORM_BODY`; a declarative (YAML) shell writes `{{body}}` in its `emits:`.
+
+**RenderCtx fields:** `ctx.token(name)` returns the LaTeX macro (e.g. `\druckAccent`); `ctx.style` exposes raw token values as `{ colors: Record<string,string>, fonts: { main?, mono? }, spacing: Record<string,string> }` — use it when you need a raw value (e.g. `ctx.style.fonts.main`), as opposed to `ctx.token(name)` which returns the macro.
   Frontmatter is available both on the payload (`element.frontmatter`) and mirrored on `ctx.frontmatter` — same `Record<string,string>`, use either. Typical title block:
   ```ts
   const fm = (el as DocumentLayout).frontmatter;
