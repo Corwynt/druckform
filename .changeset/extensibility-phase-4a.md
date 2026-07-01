@@ -1,5 +1,5 @@
 ---
-"druckform-mcp": minor
+"@druckform/mcp": minor
 ---
 
 Phase 4 (Part A) — `render_markdown`: a new MCP tool that renders an asset-less

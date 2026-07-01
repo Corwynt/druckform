@@ -1,5 +1,5 @@
 ---
-"druckform": minor
+"@druckform/core": minor
 ---
 
 Add `druck doctor --template <name>` — an authoring linter that validates a

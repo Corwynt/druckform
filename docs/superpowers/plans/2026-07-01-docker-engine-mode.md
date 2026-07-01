@@ -15,7 +15,7 @@
 - Engine selection applies ONLY to `render` and `preview-component`. Pure commands (`templates`, `components`, `lint`, `doctor`, `new`, `mcp`) always run local.
 - `auto`: probe `tectonic`, `rsvg-convert`, `mmdc`, `java`; print a found/missing report to **stderr**; **all present → local, any missing → docker**. `local` (forced): no probe, no report, fail lazily. `docker` (forced): no probe.
 - Docker relay: rebuild argv with `--engine` stripped; identity-mount each unique parent dir (`-v /abs:/abs`) + `-w <cwd>`; forward `-e DRUCKFORM_TEMPLATES_DIR=<abs>` when set; `docker run --rm`; stream stdio (`inherit`); propagate exit code; report/Docker chatter to stderr (stdout stays clean for `--json`).
-- Default image: `ghcr.io/corwynt/druckform:<cli-version>` (version read from the package's own `package.json`), overridable via `DRUCK_DOCKER_IMAGE`.
+- Default image: `ghcr.io/druckform/druckform:<cli-version>` (version read from the package's own `package.json`), overridable via `DRUCK_DOCKER_IMAGE`.
 - If Docker mode is selected but the `docker` binary is missing, print a clear message and exit non-zero.
 - YAGNI: no Windows path-mapping polish (macOS/Linux first); no per-document tool subsetting; MCP server not removed (only dropped from skills).
 - Run `pnpm biome check <changed files>` before each commit; branch stays lint-clean. Tests: `pnpm --filter druckform test` / `pnpm --filter druckform exec vitest run <path>`.
@@ -252,7 +252,7 @@ git commit -m "feat(druckform): engine resolver (local/docker/auto precedence + 
 
 **Interfaces:**
 - Produces:
-  - `resolveVersion(): string` and `defaultImage(): string` (→ `ghcr.io/corwynt/druckform:<version>`).
+  - `resolveVersion(): string` and `defaultImage(): string` (→ `ghcr.io/druckform/druckform:<version>`).
   - `stripEngineFlag(args: string[]): string[]`.
   - `interface MountSpec { cwd: string; in?: string; out?: string; assets?: string; style?: string; templatesDir?: string }`; `collectMountDirs(m: MountSpec): string[]` (absolute, deduped).
   - `interface DockerArgsSpec { passthrough: string[]; cwd: string; mountDirs: string[]; templatesDir?: string; image: string }`; `buildDockerArgs(s: DockerArgsSpec): string[]`.
@@ -289,8 +289,8 @@ describe("stripEngineFlag", () => {
 });
 
 describe("defaultImage", () => {
-  it("targets ghcr.io/corwynt/druckform at the package version", () => {
-    expect(defaultImage()).toMatch(/^ghcr\.io\/corwynt\/druckform:\d+\.\d+\.\d+/);
+  it("targets ghcr.io/druckform/druckform at the package version", () => {
+    expect(defaultImage()).toMatch(/^ghcr\.io\/druckform\/druckform:\d+\.\d+\.\d+/);
   });
 });
 
@@ -321,14 +321,14 @@ describe("buildDockerArgs", () => {
       cwd: "/work/proj",
       mountDirs: ["/work/proj", "/etc/styles"],
       templatesDir: "/opt/tpl",
-      image: "ghcr.io/corwynt/druckform:0.1.0",
+      image: "ghcr.io/druckform/druckform:0.1.0",
     });
     expect(args.slice(0, 4)).toEqual(["run", "--rm", "-w", "/work/proj"]);
     expect(args).toContain("-v");
     expect(args.join(" ")).toContain("/work/proj:/work/proj");
     expect(args.join(" ")).toContain("/etc/styles:/etc/styles");
     expect(args.join(" ")).toContain("-e DRUCKFORM_TEMPLATES_DIR=/opt/tpl");
-    const imgIdx = args.indexOf("ghcr.io/corwynt/druckform:0.1.0");
+    const imgIdx = args.indexOf("ghcr.io/druckform/druckform:0.1.0");
     expect(imgIdx).toBeGreaterThan(0);
     expect(args.slice(imgIdx + 1)).toEqual(["render", "--in", "doc.md", "--out", "o.pdf"]);
   });
@@ -393,7 +393,7 @@ export function resolveVersion(): string {
 }
 
 export function defaultImage(): string {
-  return `ghcr.io/corwynt/druckform:${resolveVersion()}`;
+  return `ghcr.io/druckform/druckform:${resolveVersion()}`;
 }
 
 export function stripEngineFlag(args: string[]): string[] {
@@ -838,7 +838,7 @@ In `claude-plugin/skills/druckform/SKILL.md`: replace the MCP-tool tables/workfl
 
 - [ ] **Step 2: Document the engine model in the skill**
 
-Add a short "Execution engines" section: `druck` runs the render locally if the tools (`tectonic`, `rsvg-convert`, `mmdc`, `java`) are present, otherwise automatically in Docker (`ghcr.io/corwynt/druckform:<version>`); force it with `--engine local|docker` or `DRUCK_ENGINE`; override the image with `DRUCK_DOCKER_IMAGE`. Note the auto boot report prints to stderr. Applies to `render`/`preview-component` only.
+Add a short "Execution engines" section: `druck` runs the render locally if the tools (`tectonic`, `rsvg-convert`, `mmdc`, `java`) are present, otherwise automatically in Docker (`ghcr.io/druckform/druckform:<version>`); force it with `--engine local|docker` or `DRUCK_ENGINE`; override the image with `DRUCK_DOCKER_IMAGE`. Note the auto boot report prints to stderr. Applies to `render`/`preview-component` only.
 
 - [ ] **Step 3: Rewrite the `druckform-authoring` skill's CLI↔MCP table**
 
@@ -851,7 +851,7 @@ In `docs/extending-druckform.md`: add an "Execution engines" subsection document
 - [ ] **Step 5: Verify + commit**
 
 - `grep -rn "list_components\|render_markdown\|render_document\|preview_component\|validate_component\|scaffold_component" claude-plugin/skills` → should return nothing (MCP tools no longer referenced in the skills).
-- Confirm documented flags/env names match the code (`--engine`, `DRUCK_ENGINE`, `DRUCK_DOCKER_IMAGE`, image `ghcr.io/corwynt/druckform`).
+- Confirm documented flags/env names match the code (`--engine`, `DRUCK_ENGINE`, `DRUCK_DOCKER_IMAGE`, image `ghcr.io/druckform/druckform`).
 - biome does not process `.md` (no-op) — skip.
 
 ```bash

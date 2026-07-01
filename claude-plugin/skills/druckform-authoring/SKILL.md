@@ -55,9 +55,9 @@ Components are invoked via generic directives, one syntax with three forms by co
 A `.ts` component **must** export three names (four if it needs a preamble):
 
 ```ts
-import { z, tokenRef } from "druckform";
-import { Tex, raw, escapeTeX } from "druckform";
-import type { Component, RenderCtx, BlockElement } from "druckform";
+import { z, tokenRef } from "@druckform/core";
+import { Tex, raw, escapeTeX } from "@druckform/core";
+import type { Component, RenderCtx, BlockElement } from "@druckform/core";
 
 export const schema = z.object({
   title: z.string(),
@@ -73,7 +73,7 @@ export const meta = {
 };
 
 export const preamble = `\\usepackage{tcolorbox}`;   // injected once, deduplicated
-// `z` is re-exported from "druckform" (same zod instance) so you can import
+// `z` is re-exported from "@druckform/core" (same zod instance) so you can import
 // schema + druckform helpers from one place; `import { z } from "zod";` also
 // works if you prefer importing zod directly.
 

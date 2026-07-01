@@ -1,4 +1,4 @@
-import type { BlockElement, RenderCtx } from "druckform";
+import type { BlockElement, RenderCtx } from "@druckform/core";
 import { z } from "zod";
 
 export const schema = z.object({});

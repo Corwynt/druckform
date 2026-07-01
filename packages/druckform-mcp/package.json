@@ -1,5 +1,5 @@
 {
-  "name": "druckform-mcp",
+  "name": "@druckform/mcp",
   "version": "0.1.0",
   "private": true,
   "description": "MCP adapter for druckform — HTTP upload/download + job lifecycle",
@@ -25,7 +25,7 @@
     "test:watch": "vitest"
   },
   "peerDependencies": {
-    "druckform": "workspace:*"
+    "@druckform/core": "workspace:*"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
@@ -36,7 +36,7 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/yauzl": "^2.10.0",
-    "druckform": "workspace:*",
+    "@druckform/core": "workspace:*",
     "typescript": "^5.6.0",
     "tsup": "^8.3.0",
     "vitest": "^2.1.0",

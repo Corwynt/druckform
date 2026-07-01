@@ -2,8 +2,8 @@
 
 Convert AI-authored Markdown into styled PDFs via LaTeX. Two packages in a TypeScript monorepo, distributed as a Docker image and on npm.
 
-- **`druckform`** — render engine CLI (`druck` / `druckform` binaries)
-- **`druckform-mcp`** — MCP server adapter for Claude Code
+- **`@druckform/core`** — render engine CLI (`druck` / `druckform` binaries)
+- **`@druckform/mcp`** — MCP server adapter for Claude Code
 
 ## Quick start (Docker)
 
@@ -11,7 +11,7 @@ Convert AI-authored Markdown into styled PDFs via LaTeX. Two packages in a TypeS
 # Render a document
 docker run --rm \
   -v "$(pwd):/work" \
-  ghcr.io/corwynt/druckform:latest \
+  ghcr.io/druckform/druckform:latest \
   render --template base --style /work/style.yaml --in /work/document.md --out /work/out.pdf
 ```
 
@@ -24,7 +24,7 @@ See [docs/authoring.md](docs/authoring.md) for the document format and available
 Install the druckform Claude Code plugin:
 
 ```
-/plugin marketplace add corwynt/druckform
+/plugin marketplace add druckform/druckform
 /plugin install druckform@druckform
 ```
 
@@ -54,7 +54,7 @@ Use `--json` to get machine-readable output on stdout.
 ## npm install
 
 ```bash
-npm install -g druckform druckform-mcp
+npm install -g @druckform/core @druckform/mcp
 ```
 
 Requires Node.js ≥ 22 and system dependencies: Tectonic (LaTeX), JRE (PlantUML), Graphviz, Chromium (mermaid), and librsvg2.
@@ -129,7 +129,7 @@ To try your local build against a separate Claude Code instance — instead of t
 
    A symlink means edits to `SKILL.md` in your checkout show up immediately — no copy to keep in sync.
 
-4. **Start Claude Code** in that project and confirm the `druckform` MCP tools are listed (`/mcp`) and the skill is picked up (`/druckform` or `/help`). Ask it to render a document; the tool calls now hit your local build instead of `ghcr.io/corwynt/druckform`.
+4. **Start Claude Code** in that project and confirm the `druckform` MCP tools are listed (`/mcp`) and the skill is picked up (`/druckform` or `/help`). Ask it to render a document; the tool calls now hit your local build instead of `ghcr.io/druckform/druckform`.
 
 Rebuild (`pnpm turbo build`) and restart the MCP server after code changes.
 

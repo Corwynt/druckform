@@ -94,6 +94,9 @@ importers:
         specifier: ^3.25
         version: 3.25.76
     devDependencies:
+      '@druckform/core':
+        specifier: workspace:*
+        version: link:../druckform
       '@types/node':
         specifier: ^22.0.0
         version: 22.20.0
@@ -103,9 +106,6 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^2.1.0
         version: 2.1.9(vitest@2.1.9(@types/node@22.20.0))
-      druckform:
-        specifier: workspace:*
-        version: link:../druckform
       tsup:
         specifier: ^8.3.0
         version: 8.5.1(postcss@8.5.15)(typescript@5.9.3)

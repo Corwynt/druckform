@@ -1,4 +1,4 @@
-import type { RenderCtx } from "druckform";
+import type { RenderCtx } from "@druckform/core";
 import { z } from "zod";
 
 export const schema = z.object({ title: z.string() });

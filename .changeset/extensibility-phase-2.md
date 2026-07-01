@@ -1,5 +1,5 @@
 ---
-"druckform": minor
+"@druckform/core": minor
 ---
 
 Phase 2 extensibility — self-contained templates:

@@ -1,4 +1,4 @@
-import type { DocumentLayout, RenderCtx } from "druckform";
+import type { DocumentLayout, RenderCtx } from "@druckform/core";
 import { z } from "zod";
 
 export const schema = z.object({});

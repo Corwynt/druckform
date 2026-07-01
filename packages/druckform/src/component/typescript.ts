@@ -39,7 +39,7 @@ export async function loadTypeScriptComponent(tsPath: string): Promise<Component
     target: "node22",
     // Inline zod + druckform (resolved from THIS package); leave all other
     // bare imports external so we don't bundle unrelated node_modules.
-    alias: { zod: ZOD_ENTRY, druckform: DRUCKFORM_ENTRY },
+    alias: { zod: ZOD_ENTRY, "@druckform/core": DRUCKFORM_ENTRY },
     plugins: [
       {
         name: "externalize-non-blessed",
@@ -49,8 +49,8 @@ export async function loadTypeScriptComponent(tsPath: string): Promise<Component
             if (
               args.path === "zod" ||
               args.path.startsWith("zod/") ||
-              args.path === "druckform" ||
-              args.path.startsWith("druckform/")
+              args.path === "@druckform/core" ||
+              args.path.startsWith("@druckform/core/")
             ) {
               return undefined; // let alias + normal resolution bundle these
             }

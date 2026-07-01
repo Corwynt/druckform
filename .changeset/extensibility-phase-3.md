@@ -1,5 +1,5 @@
 ---
-"druckform": minor
+"@druckform/core": minor
 ---
 
 Phase 3 extensibility — document frontmatter:

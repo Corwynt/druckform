@@ -1,5 +1,5 @@
 {
-  "name": "druckform",
+  "name": "@druckform/core",
   "version": "0.1.0",
   "description": "Markdown → PDF via LaTeX — engine CLI",
   "license": "MIT",

@@ -62,7 +62,7 @@ When the engine resolves to `docker` for a tool-using command:
 
 ### Image reference
 
-Baked-in default: **`ghcr.io/corwynt/druckform:<cli-version>`**, where `<cli-version>` is the CLI's own package version (so the relay stays in lockstep with the CLI's arg surface — CLI 0.1.0 → image tag `0.1.0`). Overridable via the **`DRUCK_DOCKER_IMAGE`** env (full ref, including tag if desired). The CLI resolves its own version at build time (tsup-injected constant) or by reading its `package.json`; the plan picks the mechanism.
+Baked-in default: **`ghcr.io/druckform/druckform:<cli-version>`**, where `<cli-version>` is the CLI's own package version (so the relay stays in lockstep with the CLI's arg surface — CLI 0.1.0 → image tag `0.1.0`). Overridable via the **`DRUCK_DOCKER_IMAGE`** env (full ref, including tag if desired). The CLI resolves its own version at build time (tsup-injected constant) or by reading its `package.json`; the plan picks the mechanism.
 
 ### CLI integration point
 
@@ -93,5 +93,5 @@ Add an engine layer invoked from `cli.ts` for the two tool-using commands. Clean
 ## Deferred / notes
 
 - Windows identity-mount path translation (drive letters) — documented limitation for now.
-- Publishing the GHCR image (`ghcr.io/corwynt/druckform`) and its CI is a separate task; this spec assumes the image exists at the versioned tag when Docker mode runs (Docker will error clearly if the tag can't be pulled).
+- Publishing the GHCR image (`ghcr.io/druckform/druckform`) and its CI is a separate task; this spec assumes the image exists at the versioned tag when Docker mode runs (Docker will error clearly if the tag can't be pulled).
 - A future `auto` refinement could scope the toolset to what a given document actually needs (only probe `mmdc`/`java` if the doc contains those diagram fences); out of scope here.

@@ -1,6 +1,6 @@
 ---
-"druckform": minor
-"druckform-mcp": minor
+"@druckform/core": minor
+"@druckform/mcp": minor
 ---
 
 Phase 1 extensibility: templates may remove an inherited component with `null`
