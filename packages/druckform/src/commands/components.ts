@@ -34,6 +34,7 @@ export async function componentsCommand(template: string, json: boolean): Promis
         acceptsChildren: def.meta.acceptsChildren,
         // Heuristic: TS components read `element`; declarative document shells use {{body}}.
         acceptsElement: source ? /\belement\b/.test(source) || source.includes("{{body}}") : false,
+        form: def.meta.form ?? "container",
         contractVersion: COMPONENT_CONTRACT_VERSION,
         ...(def.meta.example !== undefined ? { example: def.meta.example } : {}),
         ...(source !== undefined ? { source } : {}),
@@ -45,7 +46,7 @@ export async function componentsCommand(template: string, json: boolean): Promis
     process.stdout.write(`${JSON.stringify(contract, null, 2)}\n`);
   } else {
     for (const c of contract.components) {
-      console.log(`  ${c.name} — ${c.description}`);
+      console.log(`  ${c.name} [${c.form}] — ${c.description}`);
     }
   }
 }

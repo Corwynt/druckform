@@ -20,16 +20,30 @@ export function synthesizeComponentDoc(
   params: Record<string, string>,
   children: string | undefined,
   example: string | undefined,
+  form: "inline" | "leaf" | "container" = "container",
 ): string {
   // No overrides and the component ships an example → render it verbatim.
   if (Object.keys(params).length === 0 && children === undefined && example) {
     return example;
   }
-  const attrs = Object.entries(params)
+  const attrStr = Object.entries(params)
     .map(([k, v]) => `${k}="${v}"`)
     .join(" ");
-  const open = `:::${name}{${attrs}}`;
-  return `${open}\n${children ?? ""}\n:::\n`;
+  // Synthesize the directive in the SAME form the component actually fires in, so
+  // the preview exercises the real render path (inline rule vs block parser), not
+  // always a container fence.
+  if (form === "inline") {
+    // Inline must sit within a line and be followed by `[`/`{`; always include `[…]`.
+    const attrs = attrStr ? `{${attrStr}}` : "";
+    return `:${name}[${children ?? ""}]${attrs}\n`;
+  }
+  if (form === "leaf") {
+    const content = children !== undefined ? `[${children}]` : "";
+    const attrs = attrStr ? `{${attrStr}}` : "";
+    return `::${name}${content}${attrs}\n`;
+  }
+  // container (default) — body between fences
+  return `:::${name}{${attrStr}}\n${children ?? ""}\n:::\n`;
 }
 
 function emit(contract: RenderContract, json: boolean): void {
@@ -86,7 +100,13 @@ export async function previewComponentCommand(
   if (!entry) fail(`Component '${name}' not found in template '${template}'`);
 
   const params = (paramsJson ? JSON.parse(paramsJson) : {}) as Record<string, string>;
-  const md = synthesizeComponentDoc(name, params, children, entry?.def.meta.example);
+  const md = synthesizeComponentDoc(
+    name,
+    params,
+    children,
+    entry?.def.meta.example,
+    entry?.def.meta.form ?? "container",
+  );
 
   const externalStyle = stylePath ? loadStyle(stylePath) : undefined;
   const styleConfig = mergeStyle(resolved.style, externalStyle);

@@ -15,9 +15,11 @@ describe("rich list_components", () => {
     const table = out.components.find((c: { name: string }) => c.name === "block:table");
     expect(table.contractVersion).toBe("1");
     expect(table.acceptsElement).toBe(true); // block:table reads `element`
+    expect(table.form).toBe("container"); // components default to container form
     expect(typeof table.source).toBe("string");
     expect(table.source).toContain("export const meta");
     const infobox = out.components.find((c: { name: string }) => c.name === "infobox");
     expect(infobox.acceptsElement).toBe(false); // declarative infobox: no element/{{body}}
+    expect(infobox.form).toBe("container");
   });
 });

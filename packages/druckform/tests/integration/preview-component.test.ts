@@ -19,9 +19,22 @@ describe("synthesizeComponentDoc", () => {
       synthesizeComponentDoc("infobox", {}, undefined, ':::infobox{title="Note"}\nx\n:::'),
     ).toBe(':::infobox{title="Note"}\nx\n:::');
   });
-  it("builds a fenced block from params + children", () => {
+  it("builds a fenced block from params + children (default container)", () => {
     expect(synthesizeComponentDoc("infobox", { title: "Hi" }, "Body", undefined)).toBe(
       ':::infobox{title="Hi"}\nBody\n:::\n',
+    );
+  });
+  it("synthesizes an inline directive for form=inline", () => {
+    expect(synthesizeComponentDoc("badge", { tone: "warn" }, "NEW", undefined, "inline")).toBe(
+      ':badge[NEW]{tone="warn"}\n',
+    );
+  });
+  it("synthesizes an inline directive with empty content when nothing is given", () => {
+    expect(synthesizeComponentDoc("badge", {}, undefined, undefined, "inline")).toBe(":badge[]\n");
+  });
+  it("synthesizes a leaf directive for form=leaf", () => {
+    expect(synthesizeComponentDoc("figure", { src: "c.pdf" }, "A cat", undefined, "leaf")).toBe(
+      '::figure[A cat]{src="c.pdf"}\n',
     );
   });
 });
