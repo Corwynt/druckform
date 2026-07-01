@@ -25,12 +25,14 @@ export function compileStyle(config: StyleConfig): string {
     lines.push(`\\newcommand{\\${macroName}}{\\color{${macroName}}}`);
   }
 
-  // Fonts (requires fontspec package in document preamble)
+  // Fonts (requires fontspec package in document preamble). A font token may be
+  // a bare name or { name, options } — options are spliced as \setmainfont{n}[opts]
+  // (e.g. AutoFakeBold for variable fonts that lack a selectable Bold instance).
   if (tokens.fonts.main) {
-    lines.push(`\\setmainfont{${tokens.fonts.main}}`);
+    lines.push(fontCommand("setmainfont", tokens.fonts.main));
   }
   if (tokens.fonts.mono) {
-    lines.push(`\\setmonofont{${tokens.fonts.mono}}`);
+    lines.push(fontCommand("setmonofont", tokens.fonts.mono));
   }
 
   // Spacing: \newlength{\druckBlockgap}\setlength{\druckBlockgap}{0.8em}
@@ -50,4 +52,9 @@ export function tokenMacro(name: string): string {
 
 function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function fontCommand(cmd: string, spec: import("../sdk/types.js").FontSpec): string {
+  if (typeof spec === "string") return `\\${cmd}{${spec}}`;
+  return spec.options ? `\\${cmd}{${spec.name}}[${spec.options}]` : `\\${cmd}{${spec.name}}`;
 }

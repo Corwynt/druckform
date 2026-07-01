@@ -71,4 +71,20 @@ emits: |
     const output = def.render({ title: "Test" }, "\\textbf{body}", ctx);
     expect(output).toContain("\\textbf{body}");
   });
+
+  it("merges declared requiredTokens into the component def", () => {
+    const p = makeTempYaml(`
+name: warnbox
+description: A box that hardcodes a token color
+requiredTokens: [warning]
+params: {}
+emits: |
+  \\begin{tcolorbox}[colframe=druckWarning]{{children}}\\end{tcolorbox}
+slots:
+  children: true
+`);
+    const def = loadDeclarativeComponent(p);
+    expect(def.requiredTokens.has("warning")).toBe(true);
+    expect(def.meta.requiredTokens).toContain("warning");
+  });
 });

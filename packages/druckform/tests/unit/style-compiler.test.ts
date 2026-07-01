@@ -42,3 +42,30 @@ describe("tokenMacro", () => {
     expect(tokenMacro("blockGap")).toBe("\\druckBlockGap");
   });
 });
+
+describe("compileStyle fonts", () => {
+  it("emits a bare \\setmainfont for the string form", () => {
+    const cfg: StyleConfig = { $schema: "style-v1", tokens: { fonts: { main: "Noto Sans" } } };
+    const out = compileStyle(cfg);
+    expect(out).toContain("\\setmainfont{Noto Sans}");
+    expect(out).not.toContain("\\setmainfont{Noto Sans}[");
+  });
+
+  it("emits fontspec options for the object form", () => {
+    const cfg: StyleConfig = {
+      $schema: "style-v1",
+      tokens: { fonts: { main: { name: "Noto Sans", options: "AutoFakeBold=2.2" } } },
+    };
+    const out = compileStyle(cfg);
+    expect(out).toContain("\\setmainfont{Noto Sans}[AutoFakeBold=2.2]");
+  });
+
+  it("supports the object form for mono too", () => {
+    const cfg: StyleConfig = {
+      $schema: "style-v1",
+      tokens: { fonts: { mono: { name: "JetBrains Mono", options: "Scale=0.9" } } },
+    };
+    const out = compileStyle(cfg);
+    expect(out).toContain("\\setmonofont{JetBrains Mono}[Scale=0.9]");
+  });
+});

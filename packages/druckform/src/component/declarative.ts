@@ -18,6 +18,7 @@ interface DeclarativeComponentYaml {
   slots?: { children?: boolean };
   emits: string;
   preamble?: string;
+  requiredTokens?: string[];
   example?: string;
 }
 
@@ -44,6 +45,12 @@ export function loadDeclarativeComponent(yamlPath: string): ComponentDef {
       }
       shape[name] = field;
     }
+  }
+
+  // Explicitly declared token dependencies (e.g. tokens hardcoded in emits/preamble
+  // that the param-derived detection cannot see).
+  for (const token of spec.requiredTokens ?? []) {
+    requiredTokens.add(token);
   }
 
   const schema = z.object(shape);

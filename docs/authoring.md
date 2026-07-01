@@ -154,6 +154,8 @@ diagrams:
 - All `tokens.*` sub-blocks are optional; the render engine applies defaults for missing tokens.
 - Additional token names (e.g. `infoboxBg`) are only meaningful if a component reads them via the style schema.
 - The `diagrams` block is entirely optional.
+- There is no `fonts.sans` / `\setsansfont` — only `fonts.main` (→ `\setmainfont`) and `fonts.mono` (→ `\setmonofont`) are supported.
+- A font can also be `{ name, options }` instead of a bare string, e.g. `main: { name: "Noto Sans", options: "AutoFakeBold=2.2" }` — useful for variable fonts where `\bfseries` would otherwise render as Regular weight. See `docs/extending-druckform.md` §4.1 for details.
 
 ## Bundle layout
 

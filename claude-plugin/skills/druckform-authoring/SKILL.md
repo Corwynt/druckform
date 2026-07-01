@@ -24,6 +24,11 @@ scaffold → edit → doctor → preview → iterate
 
 Add `--watch` to `preview-component` to re-render on every save while editing.
 
+`preview-component`/`preview_component` only previews `:::`-invoked components. The
+`document` shell and `block:*` overrides are renderer-internal and cannot be
+previewed in isolation — iterate on them with a full `render` against a small test
+document instead.
+
 ## TypeScript Component Contract
 
 A `.ts` component **must** export three names (four if it needs a preamble):
@@ -47,6 +52,9 @@ export const meta = {
 };
 
 export const preamble = `\\usepackage{tcolorbox}`;   // injected once, deduplicated
+// `z` is re-exported from "druckform" (same zod instance) so you can import
+// schema + druckform helpers from one place; `import { z } from "zod";` also
+// works if you prefer importing zod directly.
 
 export const render: Component<typeof schema> = (params, children, ctx, element?) => {
   return Tex`\begin{tcolorbox}[title=${params.title}]
@@ -64,6 +72,13 @@ ${raw(children)}
 | `raw(x)` | wrap trusted content inside `Tex`: `children`, `ctx.token("name")`, prebuilt LaTeX |
 
 Never put a `params.*` string into LaTeX without `escapeTeX` or `Tex` (without `raw`).
+
+**Tokens: color name vs. switch macro.** A color token `accent` compiles to *both* a
+color **named** `druckAccent` (bare name, no backslash — use in color-key args like
+`colframe=druckAccent`, `\rowcolor{druckAccent}`, `druckAccent!30`) and a switch
+**macro** `\druckAccent` (use in running text). `ctx.token("accent")` returns the
+**macro** — splicing it into a `colframe=`/`\rowcolor{}` argument breaks; those need
+the bare name (`druck<Name>`, capitalize-first) instead.
 
 ## Declarative Component Contract (`*.component.yaml`)
 
@@ -89,11 +104,31 @@ example: |
 
 Interpolation: `string` params → `escapeTeX`-escaped; `token` params → `ctx.token(...)` macro (raw); `{{children}}` → pre-rendered child LaTeX (raw).
 
+## Template-Bundled Assets (`ctx.asset`, `ctx.templateDir`)
+
+- `ctx.asset(ref)` — resolves `ref` against the defining template's dir, returns an
+  **absolute** path (use directly in `\includegraphics`), auto-converts `.svg` → PDF.
+  Requires `rsvg-convert` for SVG (hard error if missing — `brew install librsvg`).
+  Memoized per render; throws if the file doesn't exist.
+- `ctx.templateDir` — the raw absolute template root (for `\input`, a bundled `.sty`, fontspec `Path=...`).
+
+```ts
+return raw(`\\includegraphics[height=8mm]{${ctx.asset("logo.svg")}}`);
+```
+
 ## The 4th Render Arg (`element?`)
 
 Only populated for:
 - **`block:*` components** — receives a typed `BlockElement` (`kind: "heading" | "table" | "list" | "codeblock" | "blockquote" | "image" | "hr"`).
 - **`document` shell** — receives `DocumentLayout` (`kind: "document"`, `documentclass`, `stylePreamble`, `componentPreamble`, `frontmatter`). The body marker is **not** a payload field — a TS shell emits the literal string `DRUCKFORM_BODY`; a declarative (YAML) shell writes `{{body}}` in its `emits:`.
+
+**RenderCtx fields:** `ctx.token(name)` returns the LaTeX macro (e.g. `\druckAccent`); `ctx.style` exposes raw token values as `{ colors: Record<string,string>, fonts: { main?, mono? }, spacing: Record<string,string> }` — use it when you need a raw value (e.g. `ctx.style.fonts.main`), as opposed to `ctx.token(name)` which returns the macro.
+  Frontmatter is available both on the payload (`element.frontmatter`) and mirrored on `ctx.frontmatter` — same `Record<string,string>`, use either. Typical title block:
+  ```ts
+  const fm = (el as DocumentLayout).frontmatter;
+  const title = escapeTeX(fm.title ?? "");
+  ```
+  See `docs/extending-druckform.md` §3.4 for the full worked example.
 
 Guard on `kind` and fall back gracefully for `:::` components (element is undefined).
 

@@ -52,9 +52,11 @@ export interface RenderContract {
 
 // ── Style ───────────────────────────────────────────────────────────────────
 
+export type FontSpec = string | { name: string; options?: string };
+
 export interface StyleTokens {
   colors: Record<string, string>; // name → #hex
-  fonts: { main?: string; mono?: string };
+  fonts: { main?: FontSpec; mono?: FontSpec };
   spacing: Record<string, string>; // name → css-length
 }
 
@@ -62,7 +64,7 @@ export interface StyleConfig {
   $schema: string;
   tokens: {
     colors?: Record<string, string>;
-    fonts?: { main?: string; mono?: string };
+    fonts?: { main?: FontSpec; mono?: FontSpec };
     spacing?: Record<string, string>;
   };
   diagrams?: {
