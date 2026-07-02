@@ -1,6 +1,6 @@
 {
   "name": "@druckform/core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Markdown → PDF via LaTeX — engine CLI",
   "license": "MIT",
   "repository": {
@@ -29,7 +29,9 @@
     "druck": "./dist/cli.js",
     "druckform": "./dist/cli.js"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
