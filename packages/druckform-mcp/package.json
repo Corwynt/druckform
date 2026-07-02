@@ -1,6 +1,6 @@
 {
   "name": "@druckform/mcp",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "MCP adapter for druckform — HTTP upload/download + job lifecycle",
   "license": "MIT",
   "repository": {
@@ -11,7 +11,9 @@
   "publishConfig": {
     "access": "public"
   },
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -24,7 +26,9 @@
   "bin": {
     "druckform-mcp": "./dist/index.js"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
